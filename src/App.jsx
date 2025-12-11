@@ -6,12 +6,13 @@ function App(){
 
   return(
   <>
+    <img src="/bgimg.png" alt="bg-img" id='bg-img'/>
     <nav>
       <a href="/" className="title">
         <img src="/2.png" alt="FinSight Icon"/>
         <div id='text'>
           <h1>FinSight</h1>
-          <h2>Your Personal Finance Tracker</h2>
+          <h2>Your Personal Expense Tracker</h2>
         </div>
       </a>
       <div className="functions">
