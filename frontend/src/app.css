@@ -1,0 +1,109 @@
+#bg-img{
+    position: fixed;
+    top: 0;
+    left: -8vw;
+    width: 110%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+  }
+  
+  nav{
+    position: absolute;
+    top: 2vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 95%;
+    height: 10vh;
+    min-height: 70px;
+    border-radius: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4rem;
+    background-color: rgba(0, 0, 0, 0.52);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+  }
+  
+  nav .title{
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    gap: 1rem;
+    color: inherit;
+  }
+  
+  nav .title img{
+    height: 6vh;
+    width: auto;
+  }
+  
+  nav .title #text{
+    display: flex;
+    flex-direction: column;
+  }
+  
+  nav .title h1{
+    color: rgb(224, 198, 0);
+    margin: 0;
+    font-size: 3.5vh;
+    font-weight: 350;
+    line-height: 1.5;
+  }
+  
+  nav .title h2{
+    font-size: 1.75vh;
+    font-weight: normal;
+    color: rgb(224, 198, 0);
+  }
+  
+  nav .functions{
+    display: flex;
+    align-items: center;
+    gap: 2vw;
+  }
+  
+  nav .functions button{
+    padding: 0.5rem 1.2rem;
+    color: rgb(224, 198, 0);
+    font-size: 2vh;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: 15px;
+    transform: translateY(0);
+    transition: all 0.3s ease;
+    position: relative;
+    white-space: nowrap;
+  }
+  
+  nav .functions button:hover{
+    background-color: rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  #cred{
+    width: 12rem;
+    text-align: center;
+    padding: 0.5rem 1.5rem;
+    font-size: 2vh;
+    background: transparent;
+    cursor: pointer;
+    color: rgb(224, 198, 0);
+    border: 0;
+    transform: translateY(0);
+    border-radius: 15px;
+    transition: all 0.3s ease-in;
+    position: relative;
+    white-space: nowrap;
+  }
+  
+  #cred:hover{
+    background-color: rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
