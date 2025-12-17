@@ -1,0 +1,30 @@
+.dashboard-container{
+    padding: 14vh 40px 40px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: 'Inter', sans-serif;
+    color: white;
+}
+
+.dashboard-header{
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    background-color: rgba(0, 0, 0, 0.52);
+    backdrop-filter: blur(15px);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border-bottom: 0;
+}
+
+.dashboard-header h1{
+    font-size: 2.5rem;
+    margin: 0;
+    color: rgb(224, 198, 0);
+    font-weight: 350;
+}
+
+.welcome-text{
+    color: #ccc;
+    margin-top: 10px;
+    font-size: 1.1rem;
+}

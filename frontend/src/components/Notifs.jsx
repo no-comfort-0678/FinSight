@@ -1,11 +1,11 @@
 import React from 'react';
-import './dashboard.css';
+import './notifs.css';
 
-function Dashboard({ user }) {
+function Notifs({ user }) {
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>Dashboard</h1>
+    <div className="notifs-container">
+      <div className="notifs-header">
+        <h1>Notifications and Reminders</h1>
         <p className="welcome-text">
           Welcome back, <span className="username-highlight">{user?.username}</span>
         </p>
@@ -14,4 +14,4 @@ function Dashboard({ user }) {
   );
 }
 
-export default Dashboard;
+export default Notifs;

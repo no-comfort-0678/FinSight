@@ -1,11 +1,11 @@
 import React from 'react';
-import './dashboard.css';
+import './split.css';
 
-function Dashboard({ user }) {
+function Split({ user }) {
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>Dashboard</h1>
+    <div className="split-container">
+      <div className="split-header">
+        <h1>Split Expenses</h1>
         <p className="welcome-text">
           Welcome back, <span className="username-highlight">{user?.username}</span>
         </p>
@@ -14,4 +14,4 @@ function Dashboard({ user }) {
   );
 }
 
-export default Dashboard;
+export default Split;

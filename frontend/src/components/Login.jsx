@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './getin.css';
+import './logsignin.css';
 
 function Login({ setUser }) {
   const [username, setUsername] = useState('');
@@ -21,7 +21,7 @@ function Login({ setUser }) {
       if (response.ok) {
         localStorage.setItem("user", JSON.stringify(data.user));
         setUser(data.user);
-        navigate('/dashboard'); 
+        navigate('/home'); 
       } else {
         alert(data.message);
         

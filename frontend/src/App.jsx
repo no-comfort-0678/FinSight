@@ -3,8 +3,12 @@ import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-
 import './app.css';
 import Login from './components/Login';
 import Signup from './components/Signin';
-import NotFound from './components/not';
+import NotFound from './components/NotFound';
+import Home from './components/Home';
 import Dashboard from './components/Dashboard';
+import Transaction from './components/Transaction';
+import Split from './components/Split';
+import Notifs from './components/Notifs';
 
 function App(){
   const navigate = useNavigate();
@@ -55,7 +59,7 @@ function App(){
     <>
       <img src="/bgimg.png" alt="bg-img" id='bg-img'/>
       <nav>
-        <div className="title" style={{cursor: 'pointer'}} onClick={() => navigate('/dashboard')}>
+        <div className="title" style={{cursor: 'pointer'}} onClick={() => navigate('/home')}>
           <img src="/2.png" alt="FinSight Icon"/>
           <div id='text'>
             <h1>FinSight</h1>
@@ -63,11 +67,11 @@ function App(){
           </div>
         </div>
         <div className="functions">
-          <button>fn1</button>
-          <button>fn2</button>
-          <button>fn3</button>
-          <button>fn4</button>
-          <button>fn5</button>
+          <button style={{cursor:'pointer'}} onClick={() => navigate('/home')}>Home</button>
+          <button style={{cursor:'pointer'}} onClick={() => navigate('/transactions')}>Transactions</button>
+          <button style={{cursor:'pointer'}} onClick={() => navigate('/dashboard')}>Dashboard</button>
+          <button style={{cursor:'pointer'}} onClick={() => navigate('/split')}>Split Expenses</button>
+          <button style={{cursor:'pointer'}} onClick={() => navigate('/notifications')}>Notifications & Reminders</button>
         </div>
         <button id='cred' onClick={handleAuthClick}>
           {navBtnText}
@@ -79,8 +83,24 @@ function App(){
         <Route path="/login" element={<Login setUser={setUser} />} />
         <Route path="/signup" element={<Signup />} />
         <Route 
+          path="/home" 
+          element={user ? <Home user={user} /> : <Navigate to="/login" />} 
+        />
+        <Route 
           path="/dashboard" 
           element={user ? <Dashboard user={user} /> : <Navigate to="/login" />} 
+        />
+        <Route 
+        path="/transactions" 
+        element={user ? <Transaction user={user} /> : <Navigate to="/login" />} 
+        />
+        <Route 
+        path="/split" 
+        element={user ? <Split user={user} /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/notifications" 
+          element={user ? <Notifs user={user} /> : <Navigate to="/login" />} 
         />
         <Route path="*" element={<NotFound />} />
       </Routes>
