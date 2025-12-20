@@ -5,11 +5,13 @@ const PORT = 5000;
 
 app.use(cors());
 app.use(express.json());
+
 let users = [];
+
 app.post('/signup', (req, res) => {
-    const{ username, password } = req.body;
+    const { username, password } = req.body;
     const userExists = users.find(u => u.username === username);
-    if(userExists){
+    if (userExists) {
         return res.status(400).json({ message: "User already exists" });
     }
     users.push({ username, password });
@@ -17,16 +19,22 @@ app.post('/signup', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-    const{ username, password } = req.body;
+    const { username, password } = req.body;
     const user = users.find(u => u.username === username);
-    if(!user){
+    if (!user) {
         return res.status(404).json({ message: "User not found" });
     }
-    if(user.password !== password){
+    if (user.password !== password) {
         return res.status(401).json({ message: "Invalid credentials" });
     }
-    res.json({ message: "Login successful", user:{ username } });
+    res.json({ message: "Login successful", user: { username } });
 });
+
+app.get("/split/users", (req, res) => {
+    res.json(users.map(u => ({ username: u.username })));
+});
+
+
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
