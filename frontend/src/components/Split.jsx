@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import './split.css';
 
-// Pointing to your Express endpoint
 const API = "http://localhost:5000/split/users";
 
 export default function App() {
@@ -16,18 +15,15 @@ export default function App() {
   const [totalAmount, setTotalAmount] = useState(0);
   const [splitMode, setSplitMode] = useState("Equal"); 
   const [friendsList, setFriendsList] = useState([]);
-
-  // --- LOGIC TO GET LOGGED IN USER ---
   const [currentUser, setCurrentUser] = useState("");
 
   useEffect(() => {
     const loggedInData = localStorage.getItem("user");
     if (loggedInData) {
       const foundUser = JSON.parse(loggedInData);
-      setCurrentUser(foundUser.username); // This sets "Vinod" or "Rohit"
+      setCurrentUser(foundUser.username); 
     }
   }, []);
-  // -----------------------------------
 
   const takename = (e) => {
     setUsername(e.target.value);
@@ -47,25 +43,17 @@ export default function App() {
     setUserError(false);
     setAmountError(false);
 
-    // --- NEW LOGIC: PREVENT SELF ADDING ---
     if (currentUser && value.toLowerCase() === currentUser.toLowerCase()) {
       setErrorMessage("You cannot add yourself!");
       setUserError(true);
       setTimeout(() => setUserError(false), 3000);
       return;
     }
-    // --------------------------------------
 
     if (splitMode === "Manual") {
       const entryAmt = parseFloat(manualAmount) || 0;
-      if (entryAmt <= 0) {
-        setErrorMessage("Invalid Amount!");
-        setAmountError(true);
-        setTimeout(() => setAmountError(false), 3000);
-        return;
-      }
-      if (currentSplitTotal + entryAmt > totalAmount) {
-        setErrorMessage("Amount Exceeded!");
+      if (entryAmt <= 0 || (currentSplitTotal + entryAmt > totalAmount)) {
+        setErrorMessage(entryAmt <= 0 ? "Invalid Amount!" : "Amount Exceeded!");
         setAmountError(true);
         setTimeout(() => setAmountError(false), 3000);
         return;
@@ -75,8 +63,6 @@ export default function App() {
     try {
       const res = await fetch(API);
       const data = await res.json();
-      
-      // Searching for 'username' in the database
       const found = data.find((user) => user.username === value);
 
       if (found) {
@@ -109,31 +95,32 @@ export default function App() {
     return friend.manualVal || "0.00";
   }
 
+  const closeModal = () => {
+    setUserExists(false);
+    setUserError(false);
+    setAmountError(false);
+  }
+
   return (
-    <>
+    <div className="scroll-container">
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Orbitron:wght@500;700;800&family=Plus+Jakarta+Sans:wght@300;500;700&family=Syne:wght@600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&family=Orbitron:wght@500;700&display=swap');
       </style>
 
       <div className={!userExists ? "main-wrapper" : "main-wrapper blurred"}>
         
-        <header className="top-header">
-          <div className="logo-container">
-            <span className="logo-icon">⚡</span>
-            <h1 className="fancy-title">SPLIT-EXPENSES</h1>
-          </div>
-          <nav className="nav-menu">
-            <button className="nav-link">Home</button>
-            <button className="nav-link">Dashboard</button>
-            <button className="nav-link" style={{color: '#00f2ff'}}>User: {currentUser || "Guest"}</button>
-          </nav>
-        </header>
+        <div className="banner-card">
+            <h2 className="banner-title">
+              Split Expenses <span className="thunder-icon">⚡</span>
+            </h2>
+            <p className="banner-welcome">Welcome back, {currentUser || "Guest"}</p>
+        </div>
 
-        <div className="main-controls-container">
+        <div className="controls-glass-box">
           <div className="control-group">
-            <label className="fancy-label">Enter Amount</label>
-            <div className="input-glow-wrapper amount-wrapper">
-              <span className="main-rupee-icon">₹</span>
+            <label className="fancy-label">Total Bill</label>
+            <div className="input-field-wrapper">
+              <span className="currency-symbol">₹</span>
               <input 
                 type="number" 
                 className="main-amount-input" 
@@ -145,9 +132,9 @@ export default function App() {
             </div>
           </div>
 
-          <div className="control-group">
+          <div className="control-group center-align">
             <label className="fancy-label">Action</label>
-            <button className="confirm-btn-neon" style={{padding: '12px 20px', fontSize: '0.9rem', width: 'auto'}} onClick={() => setUserExists(true)}>
+            <button className="add-user-btn" onClick={() => setUserExists(true)}>
               + Add User
             </button>
           </div>
@@ -156,13 +143,13 @@ export default function App() {
             <label className="fancy-label">Split Method</label>
             <div className="split-type-toggle">
               <button 
-                className={splitMode === "Equal" ? "confirm-btn-neon small" : "close-btn-ghost small"} 
+                className={splitMode === "Equal" ? "toggle-btn active" : "toggle-btn"} 
                 onClick={() => { setSplitMode("Equal"); setFriendsList([]); }}
               >
                 Equal
               </button>
               <button 
-                className={splitMode === "Manual" ? "confirm-btn-neon small" : "close-btn-ghost small"} 
+                className={splitMode === "Manual" ? "toggle-btn active" : "toggle-btn"} 
                 onClick={() => { setSplitMode("Manual"); setFriendsList([]); }}
               >
                 Manual
@@ -171,19 +158,14 @@ export default function App() {
           </div>
         </div>
 
-        <p className="main-para stylish-para">
-            {splitMode === "Manual" 
-              ? `LIMIT: ₹${currentSplitTotal.toFixed(2)} / ₹${totalAmount}` 
-              : "AUTO-DISTRIBUTION ENABLED"}
-        </p>
-
         <div className="display-ui-section">
           <h3 className="display-title">Split Records ({splitMode})</h3>
           <div className="display-table">
             <div className="display-header">
               <span>Member</span>
-              <span>Their Share</span>
-              <span>Owed To You</span>
+              <span>Owe You</span>
+              <span>You Owe Them</span>
+              <span>Status</span>
             </div>
             <div className="display-body">
               {friendsList.length === 0 ? (
@@ -191,13 +173,15 @@ export default function App() {
                    <span>No members added</span>
                    <span>₹0.00</span>
                    <span>₹0.00</span>
+                   <span>-</span>
                 </div>
               ) : (
                 friendsList.map((friend, i) => (
                   <div key={i} className="display-row">
                     <span className="name-col">{friend.username}</span>
                     <span className="owed-by-col">₹{getOwedAmount(friend)}</span>
-                    <span className="status-col">₹0.00</span>
+                    <span className="owed-to-col">₹0.00</span>
+                    <span className="status-col">Pending</span>
                   </div>
                 ))
               )}
@@ -207,23 +191,25 @@ export default function App() {
 
         {userExists && (
           <div className="modal-overlay">
-            <div className="split_amount_card">
+            <div className="split_amount_card big-ui interactive-card">
+                <button className="modal-close-x" onClick={closeModal}>&times;</button>
+                
                 <div className="modal-header">
-                  <h2 className="modal-title">
-                    {splitMode === "Equal" ? "NEW ENTRY" : "MANUAL ENTRY"}
+                  <h2 className="modal-title-big">
+                    {splitMode === "Equal" ? "Add Friend" : "Manual Entry"}
                   </h2>
-                  <p className="modal-subtext">TOTAL BILL: ₹{totalAmount}</p>
+                  <p className="modal-subtext-big">Splitting ₹{totalAmount}</p>
                 </div>
 
-                <div className="modal-body">
-                  <label className={`modal-label-fancy ${userError ? "label-error-vibe" : ""}`}>
+                <div className="modal-body-big">
+                  <label className={`modal-label-fancy-big ${userError ? "label-error" : ""}`}>
                     {userError ? errorMessage : "FRIEND USERNAME"}
                   </label>
-                  <div className={`input-glow-wrapper ${userError ? "vibrate-error" : ""}`} style={{marginBottom: splitMode === "Manual" ? '25px' : '0'}}>
+                  <div className={`input-field-wrapper-big ${userError ? "vibrate-error" : ""}`}>
                     <input 
-                      className="split_userchecking" 
+                      className="split_userchecking_big" 
                       type="text" 
-                      placeholder="e.g. Vicky_123" 
+                      placeholder="Type username..." 
                       autoFocus
                       value={username} 
                       onKeyDown={(e) => { if (e.key === 'Enter' && splitMode === "Equal") { checkuser(username); } }}  
@@ -232,14 +218,13 @@ export default function App() {
                   </div>
 
                   {splitMode === "Manual" && (
-                    <>
-                      <label className={`modal-label-fancy ${amountError ? "label-error-vibe" : ""}`}>
-                        {amountError ? errorMessage : "ASSIGNED AMOUNT"}
+                    <div style={{marginTop: '30px'}}>
+                      <label className={`modal-label-fancy-big ${amountError ? "label-error" : ""}`}>
+                        {amountError ? errorMessage : "AMOUNT (₹)"}
                       </label>
-                      <div className={`input-glow-wrapper ${amountError ? "vibrate-error" : ""}`}>
-                         <span style={{marginLeft: '12px', color: '#00f2ff', fontWeight: 'bold'}}>₹</span>
+                      <div className={`input-field-wrapper-big ${amountError ? "vibrate-error" : ""}`}>
                          <input 
-                            className="split_userchecking" 
+                            className="split_userchecking_big" 
                             type="number" 
                             placeholder="0.00"
                             value={manualAmount}
@@ -247,22 +232,19 @@ export default function App() {
                             onKeyDown={(e) => { if (e.key === 'Enter') { checkuser(username); } }}
                          />
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
 
-                <div className="modal-footer">
-                  <button className="confirm-btn-neon" onClick={() => checkuser(username)}>
-                    CONFIRM
-                  </button>
-                  <button className="close-btn-ghost" onClick={() => {setUserExists(false); setUserError(false); setAmountError(false);}}>
-                    CLOSE
+                <div className="modal-footer-big">
+                  <button className="confirm-btn-big" onClick={() => checkuser(username)}>
+                    CONFIRM ENTRY
                   </button>
                 </div>
             </div>
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }
