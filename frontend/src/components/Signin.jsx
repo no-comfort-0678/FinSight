@@ -4,8 +4,10 @@ import "./logsignin.css";
 
 function Signup() {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [conf, setConf] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmError, setConfirmError] = useState("");
   const [isValid, setIsValid] = useState(false);
@@ -14,27 +16,40 @@ function Signup() {
   useEffect(() => {
     let pErr = "";
     let cErr = "";
+    let eErr = "";
+
     if (password.length > 0) {
       const hasLetter = /[a-zA-Z]/.test(password);
       const hasNumber = /\d/.test(password);
       const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-      if (!hasLetter || !hasNumber || !hasSpecial || password.length < 8) {
-        pErr = "Password must have a letter, number, special character and must be minimum 8 characters long.";
+      if (!hasLetter || !hasNumber || !hasSpecial) {
+        pErr = "Password must have a letter, number, special character.";
       }
     }
+
     if (conf.length > 0) {
       if (password !== conf) {
         cErr = "Passwords do not match.";
       }
     }
+
+    if (email.length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        eErr = "Please enter a valid email address.";
+      }
+    }
+
     setPasswordError(pErr);
     setConfirmError(cErr);
-    if (username && password && conf && !pErr && !cErr) {
+    setEmailError(eErr);
+
+    if (username && email && password && conf && !pErr && !cErr && !eErr) {
       setIsValid(true);
     } else {
       setIsValid(false);
     }
-  }, [username, password, conf]);
+  }, [username, email, password, conf]);
 
   const handleSignup = async () => {
     if (isValid) {
@@ -42,7 +57,7 @@ function Signup() {
         const response = await fetch('http://localhost:5000/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ name: username, email, password }),
         });
 
         const data = await response.json();
@@ -73,6 +88,19 @@ function Signup() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
+          </div>
+        </div>
+
+        <div className="row">
+          <span className="conf">Email :</span>
+          <div className="input-group">
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            {emailError && <span className="error-msg">{emailError}</span>}
           </div>
         </div>
 
