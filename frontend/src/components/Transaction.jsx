@@ -1,15 +1,22 @@
-import React, { useState, useRef} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import tesseract from "tesseract.js";
 import "./transaction.css";
 
-const ManualForm = () => {
+const API_BASE = "http://localhost:5000/api/v1/transactions";
+
+const ManualForm = ({ user, onSuccess }) => {
   const [activeTab, setActiveTab] = useState("upload");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [file, setFile] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [prog, setProg] = useState(null);
   const [data, setData] = useState({ to: "", amt: 0 });
+  
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+
   const upRef = useRef(null);
+  
   const categories = [
     "Food",
     "Transport",
@@ -32,7 +39,7 @@ const ManualForm = () => {
       const best = Math.max(...nums);
       mx = best.toFixed(2);
     }
-    return { to : shop,amt : mx };
+    return { to : shop, amt : mx };
   };
 
   const upload = (e) => {
@@ -49,16 +56,57 @@ const ManualForm = () => {
         },
       })
       .then(({ data: { text } }) => {
-        console.log(`Raw Data: ${text}`);
         const extract = parse(text);
         setIsScanning(false);
         setData(extract);
+        setDescription(extract.to);
+        setAmount(extract.amt);
       })
       .catch((err) => {
         console.log("OCR error: ", err);
         setIsScanning(false);
         alert("Failed to scan. Check if uploaded data is image and try again.");
       });
+  };
+
+  const handleSubmit = async () => {
+    const finalDesc = activeTab === "upload" ? description : data.to; 
+    const finalAmt = activeTab === "upload" ? amount : data.amt;
+    
+    const descToSend = activeTab === "manual" ? description : finalDesc;
+    const amtToSend = activeTab === "manual" ? amount : finalAmt;
+
+    if (!amtToSend || !descToSend) return alert("Please fill details");
+    if (!selectedCategory) return alert("Please select a category");
+
+    try {
+      const res = await fetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: user.id,
+          amount: parseFloat(amtToSend),
+          description: descToSend,
+          category: selectedCategory,
+          source: activeTab === "upload" ? "ocr" : "manual"
+        }),
+      });
+
+      if (res.ok) {
+        alert("Transaction Saved!");
+        setDescription("");
+        setAmount("");
+        setData({ to: "", amt: 0 });
+        setFile(null);
+        setSelectedCategory(null);
+        onSuccess();
+      } else {
+        alert("Failed to save.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server Error");
+    }
   };
 
   return (
@@ -73,7 +121,11 @@ const ManualForm = () => {
         </button>
         <button
           className={`tab-btn ${activeTab === "manual" ? "active" : ""}`}
-          onClick={() => setActiveTab("manual")}
+          onClick={() => {
+            setActiveTab("manual");
+            setDescription("");
+            setAmount("");
+          }}
         >
           Manual Entry
         </button>
@@ -83,13 +135,23 @@ const ManualForm = () => {
         <div className="main-div">
           <div className="form">
             <label>Whom / Where?</label>
-            <input type="text" placeholder="e.g. Starbucks" />
+            <input 
+              type="text" 
+              placeholder="e.g. Starbucks" 
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
           <div className="form">
             <label>Amount</label>
             <div className="amount-wrapper">
               <span className="currency-symbol">₹</span>
-              <input type="number" placeholder="0.00" />
+              <input 
+                type="number" 
+                placeholder="0.00" 
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
             </div>
           </div>
           <div className="form">
@@ -112,7 +174,7 @@ const ManualForm = () => {
               ))}
             </div>
           </div>
-          <button className="submit-btn">Add Transaction</button>
+          <button className="submit-btn" onClick={handleSubmit}>Add Transaction</button>
         </div>
       )}
 
@@ -145,6 +207,8 @@ const ManualForm = () => {
                   onClick={() => {
                     setFile(null);
                     setData({ to: "", amt: 0 });
+                    setDescription("");
+                    setAmount("");
                   }}
                 >
                   ✖
@@ -153,13 +217,21 @@ const ManualForm = () => {
 
               <div className="form">
                 <label>Detected Source</label>
-                <input type="text" defaultValue={data.to} />
+                <input 
+                  type="text" 
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)} 
+                />
               </div>
               <div className="form">
                 <label>Detected Amount</label>
                 <div className="amount-wrapper">
                   <span className="currency-symbol">₹</span>
-                  <input type="number" defaultValue={data.amt} />
+                  <input 
+                    type="number" 
+                    value={amount} 
+                    onChange={(e) => setAmount(e.target.value)}
+                  />
                 </div>
               </div>
               <div className="form">
@@ -184,7 +256,7 @@ const ManualForm = () => {
                   ))}
                 </div>
               </div>
-              <button className="submit-btn">Confirm & Save</button>
+              <button className="submit-btn" onClick={handleSubmit}>Confirm & Save</button>
             </div>
           )}
         </div>
@@ -193,8 +265,16 @@ const ManualForm = () => {
   );
 };
 
-const PaymentForm = () => {
+const PaymentForm = ({ user, onSuccess }) => {
+  const [recipientName, setRecipientName] = useState(""); 
+  const [recipientEmail, setRecipientEmail] = useState(""); 
+  const [searchResults, setSearchResults] = useState([]); 
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
+  
+  const wrapperRef = useRef(null);
+
   const categories = [
     "Food",
     "Transport",
@@ -206,20 +286,118 @@ const PaymentForm = () => {
     "Other",
   ];
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setSearchResults([]);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [wrapperRef]);
+
+  const handleSearchChange = async (e) => {
+    const value = e.target.value;
+    setRecipientName(value);
+    
+    if (value.length === 0) {
+      setSearchResults([]);
+      setRecipientEmail("");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/search?query=${value}&current_user_id=${user.id}`);
+      const data = await res.json();
+      setSearchResults(data);
+    } catch (err) {
+      console.error("Search failed");
+    }
+  };
+
+  const selectUser = (selectedUser) => {
+    setRecipientName(selectedUser.name); 
+    setRecipientEmail(selectedUser.email); 
+    setSearchResults([]); 
+  };
+
+  const handlePay = async () => {
+    if (!recipientEmail || !amount) return alert("Please select a valid user and amount");
+    if (!selectedCategory) return alert("Please select a category");
+
+    try {
+      const res = await fetch(`${API_BASE}/pay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: user.id,
+          amount: parseFloat(amount),
+          recipient_email: recipientEmail, 
+          description: note || "Payment",
+          category: selectedCategory
+        }),
+      });
+
+      const data = await res.json();
+      
+      if (res.ok) {
+        alert("Payment Successful!");
+        setRecipientName("");
+        setRecipientEmail("");
+        setAmount("");
+        setNote("");
+        setSelectedCategory(null);
+        onSuccess();
+      } else {
+        alert(data.message || "Payment Failed");
+      }
+    } catch (err) {
+      alert("Server connection failed");
+    }
+  };
+
   return (
     <div className="main-div">
       <h1 className="page-title">Make a Payment</h1>
 
+      <div className="form" style={{ position: "relative" }} ref={wrapperRef}>
+        <label>Pay To (Search Name)</label>
+        <input 
+          type="text" 
+          placeholder="Recipient..." 
+          value={recipientName}
+          onChange={handleSearchChange}
+          autoComplete="off"
+        />
+         {searchResults.length > 0 && (
+          <ul className="search-dropdown">
+            {searchResults.map((person) => (
+              <li key={person.email} onClick={() => selectUser(person)}>
+                <span className="search-name">{person.name}</span>
+                <span className="search-email">{person.email}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <div className="form">
-        <label>Pay To (User ID or Name)</label>
-        <input type="text" placeholder="Recipient..." />
+        <label>Selected Email</label>
+        <input type="text" value={recipientEmail} disabled />
       </div>
 
       <div className="form">
         <label>Amount</label>
         <div className="amount-wrapper">
           <span className="currency-symbol">₹</span>
-          <input type="number" placeholder="0.00" />
+          <input 
+            type="number" 
+            placeholder="0.00" 
+            value={amount} 
+            onChange={(e) => setAmount(e.target.value)}
+          />
         </div>
       </div>
 
@@ -246,39 +424,59 @@ const PaymentForm = () => {
 
       <div className="form">
         <label>Note (Optional)</label>
-        <input type="text" placeholder="What is this for?" />
+        <input 
+          type="text" 
+          placeholder="What is this for?" 
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
       </div>
 
-      <button className="submit-btn">Pay Now</button>
+      <button className="submit-btn" onClick={handlePay}>Pay Now</button>
     </div>
   );
 };
 
-function Transaction({ page }) {
-  const [history] = useState([
-    { id: 1, to: "Starbucks", amount: 550, type: "expense" },
-    { id: 2, to: "Client Payment", amount: 12000, type: "income" },
-    { id: 3, to: "Netflix", amount: 499, type: "expense" },
-  ]);
+function Transaction({ user, page }) {
+  const [history, setHistory] = useState([]);
+
+  const fetchHistory = async () => {
+    if (!user) return;
+    try {
+      const res = await fetch(`${API_BASE}?user_id=${user.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, [user]);
 
   return (
     <div className="trans-layout">
       <div className="input-pane">
-        {page === "entry" && <ManualForm />}
-        {page === "payments" && <PaymentForm />}
+        {page === "entry" && <ManualForm user={user} onSuccess={fetchHistory} />}
+        {page === "payments" && <PaymentForm user={user} onSuccess={fetchHistory} />}
       </div>
       <div className="history-sidebar">
         <div className="sidebar-header">
           <h3>Recent Activity</h3>
         </div>
         <div className="history-list">
-          {history.map((item) => (
+          {history.length === 0 ? <p style={{padding:"20px", color:"#888"}}>No recent transactions</p> : history.map((item) => (
             <div key={item.id} className="history-card">
               <div className="h-left">
                 <div className={`status-dot ${item.type}`}></div>
                 <span>{item.to}</span>
               </div>
-              <span className={`h-amount ${item.type}`}>₹{item.amount}</span>
+              <span className={`h-amount ${item.type}`}>
+                {item.type === 'income' ? '+' : '-'} ₹{item.amount}
+              </span>
             </div>
           ))}
         </div>

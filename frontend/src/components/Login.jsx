@@ -85,7 +85,6 @@ function Login({ setUser }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: resetUsername, email: resetEmail }),
       });
-
       if (response.ok) {
         setView("reset");
       } else {
@@ -104,7 +103,7 @@ function Login({ setUser }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            username: resetUsername,
+            email: resetEmail,
             newPassword: newPass,
           }),
         });

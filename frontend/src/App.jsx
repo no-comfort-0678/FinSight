@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 import "./app.css";
 import Login from "./components/Login";
-import Signup from "./components/Signin";
+import Signup from "./components/Signup";
 import NotFound from "./components/NotFound";
 import Home from "./components/Home";
 import Dashboard from "./components/Dashboard";
@@ -133,13 +133,13 @@ function App() {
         <Route
           path="/transactions/entry"
           element={
-            user ? <Transaction page="entry" /> : <Navigate to="/login" />
+            user ? <Transaction user={user} page="entry" /> : <Navigate to="/login" />
           }
         />
         <Route
           path="/transactions/payments"
           element={
-            user ? <Transaction page="payments" /> : <Navigate to="/login" />
+            user ? <Transaction user={user} page="payments" /> : <Navigate to="/login" />
           }
         />
         <Route

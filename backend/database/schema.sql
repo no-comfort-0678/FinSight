@@ -107,3 +107,8 @@ VALUES ('Food'),
     ('Other')
 ON DUPLICATE KEY UPDATE
     name = name;
+
+ALTER TABLE transactions ADD COLUMN description VARCHAR(255) AFTER amount;
+ALTER TABLE transactions 
+ADD COLUMN recipient_id INT NULL AFTER user_id,
+ADD CONSTRAINT fk_recipient FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE SET NULL;
