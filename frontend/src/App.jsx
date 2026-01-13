@@ -15,6 +15,7 @@ import Dashboard from "./components/Dashboard";
 import Transaction from "./components/Transaction";
 import Split from "./components/Split";
 import Notifs from "./components/Notifs";
+import Profile from "./components/profile";
 
 function App() {
   const navigate = useNavigate();
@@ -112,6 +113,12 @@ function App() {
           >
             Notifications & Reminders
           </button>
+          <button
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/profile")}
+          >
+            profile
+          </button>
         </div>
         <button id="cred" onClick={handleAuthClick}>
           {navBtnText}
@@ -149,6 +156,10 @@ function App() {
         <Route
           path="/notifications"
           element={user ? <Notifs user={user} /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/profile"
+          element={user ? <Profile user={user} /> : <Navigate to="/profile" />}
         />
         <Route path="*" element={<NotFound />} />
       </Routes>
