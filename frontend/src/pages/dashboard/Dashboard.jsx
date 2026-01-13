@@ -1,7 +1,8 @@
 import React from 'react';
 import './dashboard.css';
-
-function Dashboard({ user }) {
+import {useAuth} from '../../context/AuthContext';
+function Dashboard() {
+  const {user} = useAuth();
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">

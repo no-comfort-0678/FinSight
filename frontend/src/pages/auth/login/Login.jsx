@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
 import "./logsignin.css";
 
-function Login({ setUser }) {
+function Login() {
   const [view, setView] = useState("login");
-
+  const { login } = useAuth();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isEmailLogin, setIsEmailLogin] = useState(true);
@@ -66,9 +67,8 @@ function Login({ setUser }) {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        setUser(data.user);
-        navigate("/home");
+        login(data.user);        
+        navigate("/dashboard");
       } else {
         alert(data.message);
       }
