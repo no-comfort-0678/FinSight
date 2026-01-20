@@ -1,178 +1,253 @@
-.profile-page {
-  padding: 14vh 40px;
-  max-width: 1200px;
-  margin: auto;
+.profile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1200;
+}
+
+.profile-popup {
+  width: 90%;
+  max-width: 900px;
+  max-height: 85vh;
+  overflow-y: auto;
+
   display: grid;
   grid-template-columns: 260px 1fr;
-  gap: 30px;
-  color: white;
-  font-family: "Inter", sans-serif;
+  gap: 28px;
+
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(14px);
+  border-radius: 22px;
+  padding: 28px;
+
+  border: 1px solid rgba(255,255,255,0.2);
+  animation: profilePopupIn 0.25s ease-out;
 }
 
 
 .profile-left {
-  background: rgba(0,0,0,0.52);
-  backdrop-filter: blur(15px);
-  border-radius: 16px;
-  padding: 25px 20px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 22px;
   text-align: center;
-  height: fit-content;
-  border: 1px solid rgba(255,255,255,0.2);
 }
 
 .profile-placeholder {
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 14px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.15);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
-  margin: 0 auto 15px auto;
+  font-size: 2.4rem;
 }
 
 .profile-email {
+  font-size: 0.9rem;
   color: #ccc;
+  margin-bottom: 16px;
 }
 
 .edit-profile-btn {
-  margin-top: 15px;
-  padding: 8px 18px;
+  width: 100%;
+  padding: 8px;
   border-radius: 10px;
   border: none;
-  background: #4f46e5;
+  background: #5865f2;
   color: white;
   cursor: pointer;
 }
-
 
 .profile-right {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .profile-section {
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(12px);
-  padding: 20px;
+  background: rgba(255,255,255,0.08);
+  padding: 16px 20px;
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
 }
 
 .profile-section h3 {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: #ccc;
 }
 
 .profile-section p {
-  margin: 6px 0;
   color: #ddd;
 }
 
-.row {
+.profile-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
+  color: #ddd;
 }
 
-.clickable {
+.profile-clickable {
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: 0.2s ease;
 }
 
-.clickable:hover {
-  transform: scale(1.02);
+.profile-clickable:hover {
+  transform: scale(1.015);
+  background: rgba(255,255,255,0.12);
 }
 
-.logout {
-  color: #ff6b6b;
+.profile-logout {
+  color: #ff4d4d;
+  font-weight: 600;
 }
-.modal-overlay {
+
+.profile-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 9999;
+  justify-content: center;
+  z-index: 1600;
 }
 
-.modal-box {
-  background: rgba(0,0,0,0.65);
-  backdrop-filter: blur(15px);
-  padding: 32px;
+
+.profile-modal-box {
+  width: 90%;
+  max-width: 420px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(14px);
   border-radius: 20px;
-  width: 95%;
-  max-width: 550px;
-  border: 1px solid rgba(255,255,255,0.25);
+  padding: 26px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: profileModalIn 0.25s ease-out;
+  color: #ffffff;
 }
 
-.modal-box h3 {
-  margin-bottom: 15px;
-  color: #ccc;
+
+.profile-modal-box h3 {
+  margin-bottom: 14px;
+  font-size: 1.2rem;
+  color: #e0c600;
 }
 
-.modal-box p,
-.modal-box li {
+
+.profile-modal-box p,
+.profile-modal-box li {
+  font-size: 0.95rem;
   color: #ddd;
-  line-height: 1.6;
-}
-
-.about-list {
-  margin: 10px 0 20px 22px;
+  margin-bottom: 8px;
 }
 
 
-.input,
-.modal-box textarea,
-.modal-box select {
+.profile-modal-box ul {
+  padding-left: 18px;
+  margin-bottom: 12px;
+}
+
+.profile-modal-box input,
+.profile-modal-box textarea,
+.profile-modal-box select {
   width: 100%;
-  padding: 10px;
+  margin-top: 10px;
+  padding: 9px 10px;
   border-radius: 10px;
   border: none;
-  margin: 10px 0;
-  background: rgba(255,255,255,0.15);
+  outline: none;
+  background: rgba(255, 255, 255, 0.12);
   color: white;
+  font-size: 0.95rem;
 }
 
-.modal-box option {
-  background: white;
-  color: black;
-}
-
-.textarea {
-  min-height: 120px;
+.profile-modal-box textarea {
+  min-height: 90px;
   resize: none;
 }
-.save-btn {
+
+.profile-save-btn {
+  margin-top: 16px;
   width: 100%;
-  padding: 10px;
+  padding: 9px;
+  border-radius: 12px;
+  border: none;
   background: #2ea44f;
-  border: none;
-  border-radius: 10px;
   color: white;
+  font-size: 0.95rem;
   cursor: pointer;
-  margin-top: 10px;
+  transition: 0.2s ease;
 }
 
-.close-btn {
+.profile-save-btn:hover {
+  background: #269e47;
+  transform: translateY(-1px);
+}
+
+.profile-close-btn {
+  margin-top: 10px;
   width: 100%;
-  padding: 10px;
-  background: #444;
+  padding: 8px;
+  border-radius: 12px;
   border: none;
-  border-radius: 10px;
+  background: #444;
   color: white;
+  font-size: 0.9rem;
   cursor: pointer;
-  margin-top: 10px;
 }
 
+.profile-close-btn:hover {
+  background: #555;
+}
 
-@media (max-width: 900px) {
-  .profile-page {
+.profile-modal-box .success {
+  color: #2ea44f;
+  font-weight: 500;
+}
+.profile-modal-box select {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.profile-modal-box select option {
+  background: #1e1e1e;
+  color: white;
+}
+
+@keyframes profileModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-modal-box {
+    padding: 20px;
+  }
+}
+
+@keyframes profilePopupIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-popup {
     grid-template-columns: 1fr;
   }
 }

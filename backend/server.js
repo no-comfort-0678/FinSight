@@ -4,6 +4,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
 import transactionRoutes from "./routes/transaction.routes.js";
 import db from "./config/db.js";
+import router from "./routes/profile.routes.js";
 
 dotenv.config();
 const app = express();
@@ -13,6 +14,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/", authRoutes);
 app.use("/api/v1/transactions", transactionRoutes);
+app.use("/api/profile", router);
 
 app.get("/split/users", (req, res) => {
   const sql = "SELECT name as username FROM users";
