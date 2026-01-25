@@ -1,0 +1,253 @@
+.profile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1200;
+}
+
+.profile-popup {
+  width: 90%;
+  max-width: 900px;
+  max-height: 85vh;
+  overflow-y: auto;
+
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 28px;
+
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(14px);
+  border-radius: 22px;
+  padding: 28px;
+
+  border: 1px solid rgba(255,255,255,0.2);
+  animation: profilePopupIn 0.25s ease-out;
+}
+
+
+.profile-left {
+  background: rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 22px;
+  text-align: center;
+}
+
+.profile-placeholder {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+}
+
+.profile-email {
+  font-size: 0.9rem;
+  color: #ccc;
+  margin-bottom: 16px;
+}
+
+.edit-profile-btn {
+  width: 100%;
+  padding: 8px;
+  border-radius: 10px;
+  border: none;
+  background: #5865f2;
+  color: white;
+  cursor: pointer;
+}
+
+.profile-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-section {
+  background: rgba(255,255,255,0.08);
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+}
+
+.profile-section h3 {
+  margin-bottom: 8px;
+  color: #ccc;
+}
+
+.profile-section p {
+  color: #ddd;
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  color: #ddd;
+}
+
+.profile-clickable {
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.profile-clickable:hover {
+  transform: scale(1.015);
+  background: rgba(255,255,255,0.12);
+}
+
+.profile-logout {
+  color: #ff4d4d;
+  font-weight: 600;
+}
+
+.profile-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1600;
+}
+
+
+.profile-modal-box {
+  width: 90%;
+  max-width: 420px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(14px);
+  border-radius: 20px;
+  padding: 26px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: profileModalIn 0.25s ease-out;
+  color: #ffffff;
+}
+
+
+.profile-modal-box h3 {
+  margin-bottom: 14px;
+  font-size: 1.2rem;
+  color: #e0c600;
+}
+
+
+.profile-modal-box p,
+.profile-modal-box li {
+  font-size: 0.95rem;
+  color: #ddd;
+  margin-bottom: 8px;
+}
+
+
+.profile-modal-box ul {
+  padding-left: 18px;
+  margin-bottom: 12px;
+}
+
+.profile-modal-box input,
+.profile-modal-box textarea,
+.profile-modal-box select {
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  font-size: 0.95rem;
+}
+
+.profile-modal-box textarea {
+  min-height: 90px;
+  resize: none;
+}
+
+.profile-save-btn {
+  margin-top: 16px;
+  width: 100%;
+  padding: 9px;
+  border-radius: 12px;
+  border: none;
+  background: #2ea44f;
+  color: white;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.profile-save-btn:hover {
+  background: #269e47;
+  transform: translateY(-1px);
+}
+
+.profile-close-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 12px;
+  border: none;
+  background: #444;
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.profile-close-btn:hover {
+  background: #555;
+}
+
+.profile-modal-box .success {
+  color: #2ea44f;
+  font-weight: 500;
+}
+.profile-modal-box select {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.profile-modal-box select option {
+  background: #1e1e1e;
+  color: white;
+}
+
+@keyframes profileModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-modal-box {
+    padding: 20px;
+  }
+}
+
+@keyframes profilePopupIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-popup {
+    grid-template-columns: 1fr;
+  }
+}
