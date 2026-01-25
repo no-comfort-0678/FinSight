@@ -1,0 +1,313 @@
+.scroll-container {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.main-wrapper {
+  display: flex; 
+  flex-direction: column; 
+  align-items: center;
+  min-height: 100%; 
+  width: 100%; 
+  padding: 140px 0 100px 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.add-user-btn {
+  background: #eab308; 
+  color: #384437; 
+  border: none; 
+  padding: 13px;
+  border-radius: 12px; 
+  cursor: pointer; 
+  font-weight: 800; 
+  text-transform: uppercase;
+  width: 90%; 
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative; 
+}
+
+.user-count-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #384437;
+  color: #eab308;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #eab308;
+  font-weight: 800;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.action-buttons-wrapper {
+  width: 85%;
+  max-width: 900px;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 25px;
+}
+
+.grey-sync-btn {
+  background: #384437;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 800;
+  text-transform: uppercase;
+  transition: all 0.3s;
+}
+
+.grey-sync-btn:hover {
+  background: #2a3329;
+  transform: translateY(-2px);
+}
+
+.banner-card {
+    width: 85%;
+    max-width: 900px;
+    background: rgba(56, 68, 55, 0.7); 
+    backdrop-filter: blur(10px);
+    border-radius: 25px;
+    padding: 30px 40px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.banner-title { color: #ffffff; font-size: 2.5rem; margin: 0; font-family: 'Orbitron', sans-serif; }
+.thunder-icon { color: #eab308; margin-left: 10px; text-shadow: 0 0 10px rgba(234, 179, 8, 0.5); }
+.banner-welcome { color: rgba(255, 255, 255, 0.8); font-size: 1.1rem; margin-top: 10px; }
+
+.controls-glass-box {
+  width: 85%;
+  max-width: 900px;
+  background: rgba(56, 68, 55, 0.5); 
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 25px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+.control-group { display: flex; flex-direction: column; flex: 1; }
+.center-align { align-items: center; }
+
+.fancy-label {
+  color: #eab308;
+  font-weight: 800;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  letter-spacing: 1.5px;
+}
+
+.input-field-wrapper {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  display: flex; align-items: center;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.main-amount-input {
+  border: none; padding: 12px; background: transparent; outline: none; width: 100%;
+  font-weight: 600; color: #333;
+}
+
+.split-type-toggle { display: flex; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 14px; width: 100%; }
+.toggle-btn { background: transparent; border: none; padding: 10px; color: white; border-radius: 10px; cursor: pointer; font-weight: 600; flex: 1; }
+.toggle-btn.active { background: #eab308; color: #384437; }
+
+.big-ui {
+  position: relative;
+  width: 500px !important; 
+  padding: 50px !important;
+  border-radius: 30px;
+  background: white;
+  box-shadow: 
+    0 0 0 2px rgba(234, 179, 8, 0.2),
+    0 10px 20px rgba(0, 0, 0, 0.15),
+    0 0 30px rgba(234, 179, 8, 0.4),
+    0 0 60px 10px rgba(234, 179, 8, 0.15);
+}
+
+.modal-close-x {
+  position: absolute; top: 20px; right: 25px; background: #f4f4f4; border: none;
+  font-size: 24px; color: #999; cursor: pointer; width: 35px; height: 35px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+
+.modal-close-x:hover { background: #ef4444; color: white; transform: rotate(90deg); }
+
+.modal-title-big { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2rem; color: #384437; font-weight: 800; margin-bottom: 5px; }
+.modal-subtext-big { font-weight: 500; color: #888; margin-bottom: 40px; font-size: 1.1rem; }
+
+.modal-label-fancy-big { display: block; font-weight: 700; font-size: 0.8rem; color: #384437; margin-bottom: 10px; letter-spacing: 1px; }
+
+.input-field-wrapper-big { background: #f8f8f8; border-radius: 15px; padding: 5px 15px; border: 2px solid transparent; transition: all 0.3s; }
+.input-field-wrapper-big:focus-within { background: white; border-color: #eab308; box-shadow: 0 5px 15px rgba(234, 179, 8, 0.1); }
+
+.split_userchecking_big { width: 100%; padding: 15px; font-size: 1.2rem; border: none; background: transparent; outline: none; font-weight: 600; color: #333; }
+
+.confirm-btn-big {
+  width: 100%; background: #384437; color: #eab308; border: none; padding: 20px;
+  border-radius: 18px; font-weight: 800; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; margin-top: 10px; transition: all 0.3s;
+}
+
+.confirm-btn-big:hover { background: #eab308; color: #384437; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(234, 179, 8, 0.4); }
+
+.main-wrapper.blurred > *:not(.modal-overlay) { filter: blur(15px); pointer-events: none; opacity: 0.7; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+
+.vibrate-error { border-color: #ef4444 !important; animation: shake 0.4s; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+/* Records Table Styling */
+.records-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+}
+
+.record-row-item {
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    color: white;
+}
+
+.record-row-item:hover {
+    background: rgba(234, 179, 8, 0.2);
+    transform: scale(1.01);
+}
+
+.record-row-item td {
+    padding: 15px;
+}
+
+.record-row-item td:first-child {
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+    font-weight: 800;
+    color: #eab308;
+}
+
+.record-row-item td:last-child {
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+/* Detail Modal Adjustments */
+.detail-view-card {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.status-badge-pending {
+    background: #fffbeb;
+    color: #b45309;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid #fde68a;
+}
+
+/* --- UPDATED INTERACTIVE TABLE STYLES --- */
+.split-records-section {
+    width: 85%;
+    max-width: 1000px;
+    margin-top: 50px;
+    margin-bottom: 100px;
+}
+
+.glass-table-container {
+    background: rgba(42, 51, 41, 0.9); /* Dark Grey Tab */
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 
+                0 0 15px rgba(234, 179, 8, 0.2); /* Yellow shadow glow */
+}
+
+.interactive-records-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: white; /* All font in white */
+}
+
+/* Title INSIDE the table */
+.table-internal-title {
+    color: #eab308;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.6rem;
+    padding: 25px !important;
+    text-align: center;
+    letter-spacing: 3px;
+    border-bottom: 2px solid rgba(234, 179, 8, 0.3);
+}
+
+.column-headers th {
+    padding: 20px 15px;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: #eab308; /* Headers in yellow */
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.interactive-records-table tbody tr {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.interactive-records-table tbody tr:hover {
+    background: rgba(234, 179, 8, 0.1); /* Subtle yellow hover */
+    transform: scale(1.01);
+}
+
+.interactive-records-table td {
+    padding: 20px 15px;
+}
+
+.index-col { color: #eab308; font-weight: 800; text-align: center; }
+.desc-col { font-weight: 600; }
+.datetime-col { font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); }
+.amount-col { font-family: 'Orbitron', sans-serif; color: #eab308; font-weight: 700; }
+
+.empty-row {
+    padding: 50px !important;
+    text-align: center;
+    color: rgba(255,255,255,0.4);
+}
+/* Ensure background blur works with selectedSplit
+.main-wrapper.blurred {
+    filter: blur(15px);
+    pointer-events: none;
+    opacity: 0.7;
+} */
+
+/* Update your blur condition in JSX to: 
+   className={(userExists || showNewSplitModal || selectedSplit) ? "main-wrapper blurred" : "main-wrapper"} 
+*/
