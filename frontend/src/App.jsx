@@ -1,169 +1,100 @@
-import { useState, useEffect } from "react";
-import {
-  Routes,
-  Route,
-  useNavigate,
-  useLocation,
-  Navigate,
-} from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 import "./app.css";
-import Login from "./components/Login";
-import Signup from "./components/Signup";
-import NotFound from "./components/NotFound";
-import Home from "./components/Home";
-import Dashboard from "./components/Dashboard";
-import Transaction from "./components/Transaction";
-import Split from "./components/Split";
-import Notifs from "./components/Notifs";
-import Profile from "./components/profile";
+import AppLayout from "./components/AppLayout";
+import ProtectedRoute from "./components/ProtectectedRoute";
+import Login from "./pages/auth/login/Login";
+import Signup from "./pages/auth/signup/Signup";
+import Home from "./pages/home/Home";
+import Dashboard from "./pages/dashboard/Dashboard";
+import Transaction from "./pages/transaction/Transaction";
+import Split from "./pages/split/Split";
+import Notifs from "./pages/notification/Notifs";
+import NotFound from "./pages/notfound/NotFound";
+import Navbar from "./components/navbar/navbar";
+import Profile from "./pages/auth/profile/profile";
 
 function App() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
-    navigate("/login");
-  };
-
-  const isSignupPath = location.pathname === "/signup";
-  let navBtnText;
-
-  if (user) {
-    navBtnText = "Logout";
-  } else {
-    navBtnText = isSignupPath ? "Go to Login" : "Go to Sign Up";
-  }
-
-  const handleAuthClick = () => {
-    if (user) {
-      handleLogout();
-    } else {
-      if (isSignupPath) {
-        navigate("/login");
-      } else {
-        navigate("/signup");
-      }
-    }
-  };
-
-  if (isLoading) {
-    return null;
-  }
+  const { user } = useAuth();
 
   return (
     <>
       <img src="/bgimg.png" alt="bg-img" id="bg-img" />
-      <nav>
-        <div
-          className="title"
-          style={{ cursor: "pointer" }}
-          onClick={() => navigate("/home")}
-        >
-          <img src="/2.png" alt="FinSight Icon" />
-          <div id="text">
-            <h1>FinSight</h1>
-            <h2>Your Personal Expense Tracker</h2>
-          </div>
-        </div>
-        <div className="functions">
-          <button
-            style={{ cursor: "pointer" }}
-            onClick={() => navigate("/home")}
-          >
-            Home
-          </button>
-          <div className="dropdown">
-            <button className="dropdown-trigger">Transactions</button>
-            <div className="dropdown-content">
-              <div onClick={() => navigate("/transactions/entry")}>
-                Manual Entry
-              </div>
-              <div onClick={() => navigate("/transactions/payments")}>
-                Make Payment
-              </div>
-            </div>
-          </div>
-          <button
-            style={{ cursor: "pointer" }}
-            onClick={() => navigate("/dashboard")}
-          >
-            Dashboard
-          </button>
-          <button
-            style={{ cursor: "pointer" }}
-            onClick={() => navigate("/split")}
-          >
-            Split Expenses
-          </button>
-          <button
-            style={{ cursor: "pointer" }}
-            onClick={() => navigate("/notifications")}
-          >
-            Notifications & Reminders
-          </button>
-          <button
-            style={{ cursor: "pointer" }}
-            onClick={() => navigate("/profile")}
-          >
-            profile
-          </button>
-        </div>
-        <button id="cred" onClick={handleAuthClick}>
-          {navBtnText}
-        </button>
-      </nav>
+      <Navbar />
 
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login setUser={setUser} />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route
-          path="/home"
-          element={user ? <Home user={user} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/dashboard"
-          element={user ? <Dashboard user={user} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/transactions/entry"
-          element={
-            user ? <Transaction user={user} page="entry" /> : <Navigate to="/login" />
-          }
-        />
-        <Route
-          path="/transactions/payments"
-          element={
-            user ? <Transaction user={user} page="payments" /> : <Navigate to="/login" />
-          }
-        />
-        <Route
-          path="/split"
-          element={user ? <Split user={user} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/notifications"
-          element={user ? <Notifs user={user} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/profile"
-          element={user ? <Profile user={user} /> : <Navigate to="/profile" />}
-        />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
+  <Route path="/" element={<Navigate to="/login" replace />} />
+  <Route path="/login" element={<Login />} />
+  <Route path="/signup" element={<Signup />} />
+
+  <Route
+    path="/dashboard"
+    element={
+      <ProtectedRoute>
+        <AppLayout>
+          <Dashboard />
+        </AppLayout>
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/home"
+    element={
+      <ProtectedRoute>
+        <Home />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/transactions/entry"
+    element={
+      <ProtectedRoute>
+        <Transaction page="entry" />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/transactions/payments"
+    element={
+      <ProtectedRoute>
+        <Transaction page="payments" />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/split"
+    element={
+      <ProtectedRoute>
+        <Split />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/notifications"
+    element={
+      <ProtectedRoute>
+        <Notifs />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/profile"
+    element={
+      <ProtectedRoute>
+        <Profile />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route path="*" element={<NotFound />} />
+</Routes>
+</>
   );
 }
 

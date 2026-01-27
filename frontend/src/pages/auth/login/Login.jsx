@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
 import "./logsignin.css";
 
-function Login({ setUser }) {
+function Login() {
   const [view, setView] = useState("login");
-
+  const { login } = useAuth();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isEmailLogin, setIsEmailLogin] = useState(true);
@@ -57,7 +58,7 @@ function Login({ setUser }) {
         ? { email: identifier, password }
         : { username: identifier, password };
 
-      const response = await fetch("http://localhost:5000/login", {
+      const response = await fetch("http://localhost:5000/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -66,9 +67,8 @@ function Login({ setUser }) {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        setUser(data.user);
-        navigate("/home");
+       login({ user: data.user, token: data.token });        
+        navigate("/dashboard");
       } else {
         alert(data.message);
       }
@@ -136,7 +136,7 @@ function Login({ setUser }) {
         <div id="info">
           <div className="row">
             <span className="conf">
-              {isEmailLogin ? "Email :" : "Username :"}
+              {isEmailLogin ? "username:" : "Username :"}
             </span>
             <div className="input-group">
               <input
