@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import "./notifs.css";
-
+import { useAuth } from "../../context/AuthContext";
 function Notifs() {
   const [activeTab, setActiveTab] = useState("reminders");
   const [filter, setFilter] = useState("monthly");
   const [editingId, setEditingId] = useState(null);
-
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: "",
     date: "",

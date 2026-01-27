@@ -58,7 +58,7 @@ function Login() {
         ? { email: identifier, password }
         : { username: identifier, password };
 
-      const response = await fetch("http://localhost:5000/login", {
+      const response = await fetch("http://localhost:5000/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -67,7 +67,7 @@ function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        login(data.user);        
+       login({ user: data.user, token: data.token });        
         navigate("/dashboard");
       } else {
         alert(data.message);
@@ -136,7 +136,7 @@ function Login() {
         <div id="info">
           <div className="row">
             <span className="conf">
-              {isEmailLogin ? "Email :" : "Username :"}
+              {isEmailLogin ? "username:" : "Username :"}
             </span>
             <div className="input-group">
               <input
