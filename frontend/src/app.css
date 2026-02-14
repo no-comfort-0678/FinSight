@@ -1,14 +1,11 @@
 #bg-img {
   position: fixed;
-  top: 0;
-  left: -8vw;
-  width: 110%;
-  height: 100%;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   object-fit: cover;
   z-index: -1;
-  user-select: none;
 }
-
 nav {
   position: absolute;
   top: 2vh;
@@ -28,7 +25,6 @@ nav {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   z-index: 100;
 }
-
 nav .title {
   display: flex;
   align-items: center;
@@ -157,4 +153,21 @@ nav .functions button:hover {
   background-color: rgba(0, 0, 0, 0.3);
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar-slot {
+  height: 14vh;
+  min-height: 90px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.app-main {
+  flex: 1;
+  overflow-y: auto;
 }
