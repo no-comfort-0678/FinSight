@@ -110,6 +110,4 @@ FinSight/
 ## 📈 features remaining
 - [ ] Add suppourt for manual bills upload by using another api.
 - [ ] Detailed budget setting and alerts/notification and dues according to user bills
-- [ ] Multi-currency support.
-- [ ] Dark mode toggle.
 Note: As of now split wise and dashboard analysis are in seperate branches will be merged soon.
