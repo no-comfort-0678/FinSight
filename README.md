@@ -50,7 +50,7 @@ FinSight is a modern, AI-powered personal finance management application that he
    JWT_SECRET=your_jwt_secret
    GEMINI_API_KEY=your_gemini_api_key
    ```
-4. Run migrations (if using Drizzle):
+4. Run migrations:
    ```bash
    npx drizzle-kit push
    ```
@@ -73,6 +73,7 @@ FinSight is a modern, AI-powered personal finance management application that he
    ```env
    VITE_API_URL=http://localhost:5000/api/v1
    OPENAI_API_KEY=your_openai_api_key
+   (no need as of key now as it uses regex and the bug has to be fixed)
    ```
 4. Start the development server:
    ```bash
