@@ -141,6 +141,29 @@
     background-color: rgba(181, 212, 171, 0.2);
 }
 
+#submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Cancel button (shown when editing) */
+#cancel-btn {
+    width: 100%;
+    height: 2.6rem;
+    background-color: transparent;
+    color: rgba(255, 100, 100, 0.8);
+    border: 1px solid rgba(255, 100, 100, 0.5);
+    border-radius: 1rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    transition: 0.3s;
+}
+
+#cancel-btn:hover {
+    background-color: rgba(255, 100, 100, 0.1);
+}
+
 .divider {
     border: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -163,6 +186,17 @@
     color: white;
 }
 
+.list-item strong {
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.list-item small {
+    display: block;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.82rem;
+}
+
 .unread {
     font-weight: 800 !important;
     background: rgba(255, 255, 255, 0.15);
@@ -182,7 +216,7 @@
 .item-right {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.6rem;
 }
 
 .item-amount {
@@ -197,6 +231,33 @@
     border-radius: 0.5rem;
     padding: 0.2rem 0.6rem;
     cursor: pointer;
+    transition: 0.2s;
+}
+
+.edit-action-btn:hover {
+    background: rgba(181, 212, 171, 0.15);
+}
+
+/* Delete button */
+.delete-action-btn {
+    background: transparent;
+    color: rgba(255, 100, 100, 0.8);
+    border: 1px solid rgba(255, 100, 100, 0.5);
+    border-radius: 0.5rem;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.delete-action-btn:hover {
+    background: rgba(255, 100, 100, 0.15);
+}
+
+/* Notified badge */
+.notified-badge {
+    color: #b5d4ab;
+    font-size: 0.75rem;
+    margin-left: 0.4rem;
 }
 
 .filter-bar {
@@ -224,4 +285,16 @@
     color: rgba(255, 255, 255, 0.4);
     text-align: center;
     margin-top: 2rem;
+}
+
+/* Error message banner */
+.error-msg {
+    color: #ff7a7a;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-bottom: 0.8rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 100, 100, 0.1);
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 100, 100, 0.3);
 }

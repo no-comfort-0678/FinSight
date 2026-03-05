@@ -1,15 +1,32 @@
-import { pgTable, uuid, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  serial,
+  integer,
+  varchar,
+  numeric,
+  boolean,
+  date,
+  time,
+  timestamp,
+} from "drizzle-orm/pg-core";
+import { users } from "./users.js";
 
 export const reminders = pgTable("reminders", {
-    id: uuid("id").defaultRandom().primaryKey(),
+  id: serial("id").primaryKey(),
 
-    userId: uuid("user_id").notNull(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
 
-    title: varchar("title", { length: 255 }).notNull(),
-    description: varchar("description", { length: 500 }),
+  title: varchar("title", { length: 255 }).notNull(),
 
-    remindAt: timestamp("remind_at").notNull(),
+  reminderDate: date("reminder_date").notNull(),
 
-    isCompleted: boolean("is_completed").default(false),
-    createdAt: timestamp("created_at").defaultNow(),
+  reminderTime: time("reminder_time").notNull(),
+
+  amount: numeric("amount", { precision: 15, scale: 2 }).default("0.00"),
+
+  notified: boolean("notified").default(false),
+
+  createdAt: timestamp("created_at").defaultNow(),
 });
