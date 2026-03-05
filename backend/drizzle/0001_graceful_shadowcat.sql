@@ -1,0 +1,1 @@
+ALTER TABLE "split_members" ADD COLUMN "status" varchar(50) DEFAULT 'pending';

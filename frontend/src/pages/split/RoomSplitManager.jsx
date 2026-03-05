@@ -1,0 +1,378 @@
+/**
+ * Comments: Full RoomSplitManager. No simplifications.
+ * Added: manualDrafts state and modalLeftover useMemo.
+ * Added: Save button for Manual Splits in the Modal.
+ * Rules: Providing the whole code after changes [2025-12-20].
+ */
+import React, { useState, useEffect, useMemo } from "react";
+import { 
+  History, RefreshCw, ChevronLeft, DollarSign, 
+  CheckCircle2, X, Users, PieChart, Banknote, AlertTriangle, RotateCcw, Save
+} from "lucide-react";
+
+const API = "http://localhost:5000/split";
+
+const RoomSplitManager = ({ activeRoom, user, onBack }) => {
+  const [totalAmount, setTotalAmount] = useState("");
+  const [splitName, setSplitName] = useState("");
+  const [splitType, setSplitType] = useState("equal");
+  const [splitRecords, setSplitRecords] = useState([]);
+  const [selectedFriends, setSelectedFriends] = useState([]); 
+  const [showMemberDropdown, setShowMemberDropdown] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showRevertModal, setShowRevertModal] = useState(false);
+  const [summaryData, setSummaryData] = useState([]);
+  const [targetSplit, setTargetSplit] = useState(null);
+  const [manualDrafts, setManualDrafts] = useState({}); // To hold unsaved typing
+  const [joinAmount, setJoinAmount] = useState("");
+  const [errorId, setErrorId] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // DYNAMIC LEFTOVER CALCULATION
+  const modalLeftover = useMemo(() => {
+    if (!targetSplit) return "0.00";
+    const gross = parseFloat(targetSplit.totalAmount) || 0;
+    const sum = targetSplit.members.reduce((acc, m) => {
+      // Use the draft value if the user is typing, otherwise use the DB value
+      const val = manualDrafts[m.username] !== undefined ? manualDrafts[m.username] : m.amount;
+      return acc + (parseFloat(val) || 0);
+    }, 0);
+    return (gross - sum).toFixed(2);
+  }, [targetSplit, manualDrafts]);
+
+  const payerShare = useMemo(() => {
+    const gross = parseFloat(totalAmount) || 0;
+    const friendsSum = selectedFriends.reduce((acc, f) => acc + (parseFloat(f.amount) || 0), 0);
+    return (gross - friendsSum).toFixed(2);
+  }, [totalAmount, selectedFriends]);
+
+  const getHistory = async () => {
+    setIsRefreshing(true);
+    try {
+      const res = await fetch(`${API}/history?roomId=${activeRoom.id}`);
+      const data = await res.json();
+      setSplitRecords(Array.isArray(data) ? data : []);
+      if (targetSplit) {
+        const updated = data.find(s => s.id === targetSplit.id);
+        if (updated) setTargetSplit(updated);
+      }
+    } catch (err) { setSplitRecords([]); } finally { setIsRefreshing(false); }
+  };
+
+  const fetchSummary = async () => {
+    try {
+      const res = await fetch(`${API}/summary?currentUsername=${user.username}&roomId=${activeRoom.id}`);
+      const data = await res.json();
+      setSummaryData(data);
+      setShowSummaryModal(true);
+    } catch (err) { alert("Failed to load room summary"); }
+  };
+
+  const handleSettleDebt = async (targetUsername) => {
+    try {
+      const res = await fetch(`${API}/settle-debt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomId: activeRoom.id,
+          currentUsername: user.username,
+          targetUsername: targetUsername
+        })
+      });
+      if (res.ok) {
+        alert(`Settled all debts with ${targetUsername}!`);
+        fetchSummary();
+        getHistory(); 
+      }
+    } catch (err) { alert("Settlement error"); }
+  };
+
+  useEffect(() => { if (activeRoom?.id) getHistory(); }, [activeRoom.id]);
+
+  const handleUpdateAmount = async (targetUsername, newVal, splitId) => {
+    if (newVal === "" || isNaN(newVal)) return;
+    try {
+      const res = await fetch(`${API}/update-amount`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ splitId, targetUsername, newAmount: newVal })
+      });
+      if (res.status === 403) { setShowRevertModal(true); return; }
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      getHistory();
+    } catch (err) {
+      setErrorId(targetUsername);
+      setTimeout(() => setErrorId(null), 500);
+      alert(err.message);
+    }
+  };
+
+  const handleBulkSaveManual = async () => {
+    if (parseFloat(modalLeftover) !== 0) {
+      return alert(`Cannot save! Total sum must match the gross amount. Leftover: ${modalLeftover}`);
+    }
+    const updates = targetSplit.members.map(m => ({
+      username: m.username,
+      amount: manualDrafts[m.username] !== undefined ? manualDrafts[m.username] : m.amount
+    }));
+
+    try {
+      const res = await fetch(`${API}/bulk-update-manual`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ splitId: targetSplit.id, updates })
+      });
+      if (res.ok) {
+        alert("Manual changes saved successfully!");
+        setManualDrafts({}); // Clear drafts
+        getHistory();
+      } else {
+        const d = await res.json();
+        alert(d.message);
+      }
+    } catch (err) { alert("Save failed"); }
+  };
+
+  const handleRevertAll = async () => {
+    try {
+      const res = await fetch(`${API}/revert-split`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ splitId: targetSplit.id })
+      });
+      if (res.ok) { setShowRevertModal(false); getHistory(); }
+    } catch (err) { alert("Revert failed"); }
+  };
+
+  const handleToggleStatus = async (username, currentStatus, split) => {
+    if (user.username !== split.paidBy) return alert("Only the Payer can confirm payments.");
+    const nextStatus = currentStatus === 'pending' ? 'paid' : 'pending';
+    try {
+      await fetch(`${API}/toggle-status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ splitId: split.id, username, status: nextStatus })
+      });
+      getHistory();
+    } catch (err) { alert("Update failed"); }
+  };
+
+  const toggleFriend = (name) => {
+    const exists = selectedFriends.find(f => f.username === name);
+    if (exists) setSelectedFriends(selectedFriends.filter(f => f.username !== name));
+    else setSelectedFriends([...selectedFriends, { username: name, amount: '' }]);
+  };
+
+  const handleCreateSplit = async () => {
+    const gross = parseFloat(totalAmount);
+    if (!gross || !splitName || selectedFriends.length === 0) return alert("Fill all details.");
+    let finalShares = splitType === "equal" 
+      ? selectedFriends.map(f => ({ ...f, amount: (gross / (selectedFriends.length + 1)).toFixed(2) }))
+      : selectedFriends.map(f => ({ ...f, amount: parseFloat(f.amount || 0).toFixed(2) }));
+
+    try {
+      const res = await fetch(`${API}/finalize-split`, { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: splitName, totalAmount: gross,
+          paidBy: user.username, roomId: activeRoom.id, friends: finalShares,
+          splitType: splitType
+        })
+      });
+      if (res.ok) { setTotalAmount(""); setSplitName(""); setSelectedFriends([]); getHistory(); }
+    } catch (err) { alert("Sync failed."); }
+  };
+
+  const handleJoinConfirm = async () => {
+    try {
+      const res = await fetch(`${API}/join-split`, { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ splitId: targetSplit.id, username: user.username, amount: 0 })
+      });
+      if (res.ok) { setShowJoinModal(false); getHistory(); }
+    } catch (err) { alert("Join failed."); }
+  };
+
+  return (
+    <div className="split-page-main">
+      <div className="split-manager-container">
+        <div className="manager-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+          <div className="brand-stack">
+            <button className="btn-yellow-outline" onClick={onBack}><ChevronLeft size={18}/> BACK TO LOBBY</button>
+            <h1 className="yellow-title spacing-v">{activeRoom.roomName}</h1>
+          </div>
+          <div className="header-utility" style={{display:'flex', gap: '12px', alignItems: 'center'}}>
+            <button className="btn-yellow-solid" style={{padding: '8px 16px', fontSize: '12px', width:'auto'}} onClick={fetchSummary}>
+              <PieChart size={16} style={{marginRight: '6px'}}/> VIEW SUMMARY
+            </button>
+            <div className="member-count-badge"><Users size={16} /> {activeRoom.members.length} Members</div>
+          </div>
+        </div>
+
+        <div className="split-main-grid">
+          <div className="expense-form-card">
+            <div className="card-header-row">
+              <h3><DollarSign size={20}/> NEW SPLIT</h3>
+              <div className="type-toggle-v3">
+                <button className={splitType==='equal'?'active':''} onClick={()=>setSplitType('equal')}>EQUAL</button>
+                <button className={splitType==='manual'?'active':''} onClick={()=>setSplitType('manual')}>MANUAL</button>
+              </div>
+            </div>
+            <div className="input-group-v3"><label>DESCRIPTION</label><input className="split-input-v3" value={splitName} onChange={(e)=>setSplitName(e.target.value)} placeholder="Dinner, Rent, Movie..." /></div>
+            <div className="input-group-v3"><label>TOTAL GROSS AMOUNT ($)</label><input type="number" className="split-input-v3" value={totalAmount} onChange={(e)=>setTotalAmount(e.target.value)} placeholder="0.00" /></div>
+            <button className="btn-yellow-outline full-w spacing-v" onClick={() => setShowMemberDropdown(!showMemberDropdown)}>
+              {showMemberDropdown ? "CLOSE LIST" : `SELECT MEMBERS (${selectedFriends.length})`}
+            </button>
+            {showMemberDropdown && (
+              <div className="member-selection-box">
+                {activeRoom.members.filter(m => m !== user.username).map(m => (
+                  <div key={m} className="member-sel-item" onClick={() => toggleFriend(m)}>
+                    <span>@{m}</span>
+                    {selectedFriends.find(f => f.username === m) && <CheckCircle2 size={16} color="#e0c600"/>}
+                  </div>
+                ))}
+              </div>
+            )}
+            {splitType === 'manual' && selectedFriends.map((f, i) => (
+              <div key={i} className="manual-row spacing-v">
+                <span>@{f.username}</span>
+                <input className="manual-input-mini" type="number" placeholder="Share" onChange={(e) => {
+                  const up = [...selectedFriends]; up[i].amount = e.target.value; setSelectedFriends(up);
+                }} />
+              </div>
+            ))}
+            <div className="payer-info-box"><small>AUTO-CALC SHARE ({user.username})</small><strong>${payerShare}</strong></div>
+            <button className="btn-yellow-solid spacing-v" onClick={handleCreateSplit}>COMMIT TO DATABASE</button>
+          </div>
+
+          <div className="history-list-card">
+            <div className="card-header-row">
+              <h3><History size={20}/> TRANSACTION LOG</h3>
+              <RefreshCw size={18} className={`refresh-icon cursor-p ${isRefreshing ? 'spin' : ''}`} onClick={getHistory}/>
+            </div>
+            <div className="history-table-wrapper">
+              <table className="history-table-v3">
+                <thead><tr><th>DESCRIPTION</th><th>PAID BY</th><th>TOTAL</th><th>ACTION</th></tr></thead>
+                <tbody>
+                  {splitRecords.length > 0 ? splitRecords.map(rec => {
+                    const isMember = rec.members?.some(m => m.username === user.username) || rec.paidBy === user.username;
+                    return (
+                      <tr key={rec.id}>
+                        <td className="yellow-bold cursor-p" onClick={() => {setTargetSplit(rec); setManualDrafts({}); setShowJoinModal(true);}}>{rec.description}</td>
+                        <td>@{rec.paidBy}</td>
+                        <td className="yellow-text">${rec.totalAmount}</td>
+                        <td><button className="btn-yellow-mini" onClick={() => {setTargetSplit(rec); setManualDrafts({}); setShowJoinModal(true);}}>{isMember ? "DETAILS" : "JOIN"}</button></td>
+                      </tr>
+                    );
+                  }) : <tr><td colSpan="4" style={{textAlign:'center', padding:'20px', color:'#555'}}>No activity in this room.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showJoinModal && targetSplit && (
+        <div className="split-modal-overlay">
+          <div className="split-modal-box">
+            <div className="modal-top card-header-row">
+              <h3 className="yellow-text">{targetSplit.description}</h3>
+              <X className="cursor-p" onClick={() => setShowJoinModal(false)} size={24} />
+            </div>
+            
+            <div className="modal-info-summary" style={{display:'flex', justifyContent:'space-between', background:'#111', padding:'10px', borderRadius:'8px', marginBottom:'15px'}}>
+                <span>TOTAL: ${targetSplit.totalAmount}</span>
+                <span style={{color: parseFloat(modalLeftover) === 0 ? '#00ff88' : '#ff4444', fontWeight:'bold'}}>
+                   {parseFloat(modalLeftover) >= 0 ? 'REMAINING: ' : 'OVER LIMIT: '}${Math.abs(modalLeftover)}
+                </span>
+            </div>
+
+            <div className="member-detail-list spacing-v">
+              {targetSplit.members?.map((m) => (
+                <div key={m.username} className={`detail-row-static ${errorId === m.username ? 'vibrate-error' : ''}`}>
+                  <div className="name-col">
+                      <span className={m.username === user.username ? "yellow-text" : ""}>@{m.username}</span>
+                      {m.username === targetSplit.paidBy && <small className="payer-tag">PAYER</small>}
+                  </div>
+                  <div className="edit-input-wrapper-v4">
+                    <input 
+                      className="dynamic-share-input" 
+                      value={manualDrafts[m.username] !== undefined ? manualDrafts[m.username] : parseFloat(m.amount).toFixed(2)} 
+                      onChange={(e) => {
+                        if(targetSplit.splitType === 'manual') {
+                           setManualDrafts({...manualDrafts, [m.username]: e.target.value});
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if(targetSplit.splitType === 'equal') {
+                           handleUpdateAmount(m.username, e.target.value, targetSplit.id);
+                        }
+                      }}
+                    />
+                  </div>
+                  <span className={`status-pill ${m.status} ${user.username === targetSplit.paidBy ? 'clickable' : ''}`} onClick={() => handleToggleStatus(m.username, m.status, targetSplit)}>{m.status}</span>
+                </div>
+              ))}
+            </div>
+
+            {targetSplit.splitType === 'manual' && (
+                <button className="btn-yellow-solid full-w spacing-v" onClick={handleBulkSaveManual}>
+                    <Save size={18} style={{marginRight:'8px'}}/> SAVE MANUAL CHANGES
+                </button>
+            )}
+
+            {!targetSplit.members?.some(m => m.username === user.username) && (
+                <button className="btn-yellow-solid full-w spacing-v" onClick={handleJoinConfirm}>JOIN THIS SPLIT</button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showRevertModal && (
+        <div className="split-modal-overlay">
+          <div className="revert-modal-v4">
+            <div className="revert-icon-circle"><AlertTriangle size={32} color="#000" /></div>
+            <h2 className="revert-title">SYSTEM LOCK REACHED</h2>
+            <p className="revert-desc">To change this value, you must <strong>Reset All Manual Locks</strong>. This will return the split to equal distribution.</p>
+            <div className="revert-actions">
+              <button className="btn-revert-confirm" onClick={handleRevertAll}><RotateCcw size={18}/> RESET ALL LOCKS</button>
+              <button className="btn-revert-cancel" onClick={() => setShowRevertModal(false)}>KEEP CURRENT</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSummaryModal && (
+        <div className="split-modal-overlay">
+          <div className="split-modal-box" style={{maxWidth: '600px'}}>
+            <div className="modal-top card-header-row">
+              <h3 className="yellow-text">ROOM DEBT SUMMARY</h3>
+              <X className="cursor-p" onClick={() => setShowSummaryModal(false)} size={24} />
+            </div>
+            <div className="summary-list-v3">
+                <table className="history-table-v3">
+                  <thead><tr><th>FRIEND</th><th>OWES YOU</th><th>YOU OWE</th><th>ACTION</th></tr></thead>
+                  <tbody>
+                    {summaryData.map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="yellow-bold">@{item.username}</td>
+                        <td style={{color: parseFloat(item.oweToYou) > 0 ? '#00ff88' : ''}}>${item.oweToYou}</td>
+                        <td style={{color: parseFloat(item.youOweThem) > 0 ? '#ff4444' : ''}}>${item.youOweThem}</td>
+                        <td>{parseFloat(item.oweToYou) > 0 && <button className="btn-yellow-mini" style={{background: '#00ff88', color: '#000'}} onClick={() => handleSettleDebt(item.username)}><Banknote size={14}/> SETTLE</button>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+            </div>
+            <button className="btn-yellow-solid full-w spacing-v" onClick={() => setShowSummaryModal(false)}>CLOSE</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default RoomSplitManager;
