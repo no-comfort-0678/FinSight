@@ -14,24 +14,16 @@ export default function CategoryBreakdownChart({ month, year }) {
   useEffect(() => {
     if (!user || !token) return;
 
-    const fetchPayments = async () => {
+    const fetchBreakdown = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/v1/payments/user", {
+        const res = await fetch("http://localhost:5000/api/v1/dashboard/summary", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error("Failed to fetch payments");
-        const payments = await res.json();
-        const filtered = payments.filter((p) => {
-          const date = new Date(p.createdAt);
-          return (!month || date.getMonth() + 1 === month) && (!year || date.getFullYear() === year);
-        });
-        const breakdown = {};
-        filtered.forEach((p) => {
-          const category = p.description?.toUpperCase() || "UNCATEGORIZED";
-          breakdown[category] = (breakdown[category] || 0) + Number(p.amount);
-        });
+        if (!res.ok) throw new Error("Failed to fetch dashboard summary");
+        const summary = await res.json();
 
+        const breakdown = summary.breakdown || {};
         const total = Object.values(breakdown).reduce((a, b) => a + b, 0);
 
         const pieData = Object.entries(breakdown).map(([name, value]) => ({
@@ -48,7 +40,7 @@ export default function CategoryBreakdownChart({ month, year }) {
       }
     };
 
-    fetchPayments();
+    fetchBreakdown();
   }, [user, token, month, year]);
 
   const CustomTooltip = ({ active, payload }) => {
@@ -88,10 +80,10 @@ export default function CategoryBreakdownChart({ month, year }) {
                 innerRadius={60}
                 outerRadius={80}
                 paddingAngle={2}
-                onClick={(entry) => setSelected({ 
-                  category: entry.name, 
-                  percent: entry.percent, 
-                  amount: entry.value 
+                onClick={(entry) => setSelected({
+                  category: entry.name,
+                  percent: entry.percent,
+                  amount: entry.value
                 })}
                 labelLine={false}
               >
@@ -115,13 +107,12 @@ export default function CategoryBreakdownChart({ month, year }) {
             {data.map((entry, idx) => (
               <div
                 key={idx}
-                className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                  selected?.category === entry.name ? 'border-blue-300 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
-                }`}
-                onClick={() => setSelected({ 
-                  category: entry.name, 
-                  percent: entry.percent, 
-                  amount: entry.value 
+                className={`p-3 rounded-lg border cursor-pointer transition-all ${selected?.category === entry.name ? 'border-blue-300 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
+                  }`}
+                onClick={() => setSelected({
+                  category: entry.name,
+                  percent: entry.percent,
+                  amount: entry.value
                 })}
               >
                 <div className="flex items-center">

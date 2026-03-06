@@ -1,8 +1,8 @@
 
-import  { useState } from "react";
+import { useState } from "react";
 import PaymentForm from "../../components/payments/paymentForm";
 import UploadBill from "../../components/dashboard/uploadbill";
-import {useAuth} from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 export default function Payments() {
   const { user } = useAuth();
   const [refresh, setRefresh] = useState(false);
@@ -12,10 +12,10 @@ export default function Payments() {
   };
 
   return (
-   <div style={{ paddingTop: "15vh" }} className="flex justify-center">
-  <PaymentForm onSuccess={handleSuccess} />
- 
-</div>
+    <div style={{ paddingTop: "15vh" }} className="flex flex-col md:flex-row justify-center items-start gap-8 px-4">
+      <PaymentForm onSuccess={handleSuccess} />
+      <UploadBill onSuccess={handleSuccess} />
+    </div>
   );
 }
 

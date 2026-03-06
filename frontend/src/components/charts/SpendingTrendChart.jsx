@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
-export default function SpendingTrendChart({ userId, month, year }) {
+import { useAuth } from "../../context/AuthContext";
+export default function SpendingTrendChart({ month, year }) {
+  const { user, token } = useAuth();
   const [data, setData] = useState([]);
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!token) return;
     setLoading(true);
     (async () => {
       try {
-        const trend = await fetchSpendingTrend(userId, month, year);
+        const res = await fetch("http://localhost:5000/api/v1/dashboard/trend", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch dashboard trend");
+        const trend = await res.json();
+
         const chartData = trend.map((t) => ({
           name: t.month,
           expense: t.expense,
@@ -24,7 +31,7 @@ export default function SpendingTrendChart({ userId, month, year }) {
         setLoading(false);
       }
     })();
-  }, [userId, month, year]);
+  }, [token, month, year]);
 
   if (loading) {
     return (
@@ -82,12 +89,12 @@ export default function SpendingTrendChart({ userId, month, year }) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis 
-                dataKey="name" 
+              <XAxis
+                dataKey="name"
                 tick={{ fontSize: 12 }}
                 axisLine={false}
               />
-              <YAxis 
+              <YAxis
                 tick={{ fontSize: 12 }}
                 axisLine={false}
                 tickFormatter={(value) => `₹${value}`}
