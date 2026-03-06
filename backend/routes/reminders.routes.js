@@ -1,5 +1,5 @@
 import express from "express";
-import { db } from "../db/index.js";
+import { db } from "../db/db.js";
 import { reminders } from "../db/schema/reminders.js";
 import { eq } from "drizzle-orm";
 

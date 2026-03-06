@@ -6,6 +6,7 @@ import AuthRoutes from "./routes/auth.routes.js";
 import profileRouter from "./routes/profile.routes.js";
 import remindersRouter from "./routes/reminders.routes.js";
 import notificationsRoutes from "./routes/notifications.routes.js";
+import splitroutes from "./routes/split.routes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,6 +18,8 @@ app.use("/api/v1/auth", AuthRoutes);
 app.use("/api/profile", profileRouter);
 app.use("/api/v1/reminders", remindersRouter);
 app.use("/api/notifications", notificationsRoutes);
+app.use("/split",splitroutes );
+
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
