@@ -1,6 +1,6 @@
 {
-  "id": "fe4b7994-75c3-42c5-b9d0-1df83b027976",
-  "prevId": "1dba55d8-e57b-4218-bcad-a01f5cad02ae",
+  "id": "8c50c23a-f6bd-4310-847f-c3d789ef940e",
+  "prevId": "0fec0fe5-cc7e-4038-97ea-12a15f8a0cb0",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -453,33 +453,47 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.rooms": {
-      "name": "rooms",
+    "public.reminders": {
+      "name": "reminders",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
           "notNull": true
         },
-        "room_name": {
-          "name": "room_name",
+        "title": {
+          "name": "title",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
-        "members": {
-          "name": "members",
-          "type": "text",
+        "description": {
+          "name": "description",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "remind_at": {
+          "name": "remind_at",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true
         },
-        "owner_id": {
-          "name": "owner_id",
-          "type": "integer",
+        "is_completed": {
+          "name": "is_completed",
+          "type": "boolean",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
@@ -497,104 +511,41 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.split_members": {
-      "name": "split_members",
+    "public.notifications": {
+      "name": "notifications",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
           "notNull": true
         },
-        "split_id": {
-          "name": "split_id",
-          "type": "integer",
+        "message": {
+          "name": "message",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
-        "username": {
-          "name": "username",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount": {
-          "name": "amount",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(50)",
+        "is_read": {
+          "name": "is_read",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false,
-          "default": "'pending'"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "split_members_split_id_splits_id_fk": {
-          "name": "split_members_split_id_splits_id_fk",
-          "tableFrom": "split_members",
-          "tableTo": "splits",
-          "columnsFrom": [
-            "split_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.splits": {
-      "name": "splits",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "total_amount": {
-          "name": "total_amount",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "paid_by": {
-          "name": "paid_by",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "room_id": {
-          "name": "room_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "split_type": {
-          "name": "split_type",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'manual'"
+          "default": false
         },
         "created_at": {
           "name": "created_at",
@@ -605,21 +556,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "splits_room_id_rooms_id_fk": {
-          "name": "splits_room_id_rooms_id_fk",
-          "tableFrom": "splits",
-          "tableTo": "rooms",
-          "columnsFrom": [
-            "room_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
