@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 export default function SpendingTrendChart({ month, year }) {
   const { user, token } = useAuth();
   const [data, setData] = useState([]);
-  const [selectedPoint, setSelectedPoint] = useState(null);
+  const [selectedPoint, setSelectedPoint] = useState(null); // kept original variable name
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,15 +35,10 @@ export default function SpendingTrendChart({ month, year }) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl p-4 shadow w-full animate-pulse">
-        <div className="flex justify-between items-center mb-4">
-          <div className="h-5 bg-gray-300 rounded w-1/3"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/6"></div>
-        </div>
-        <div className="overflow-x-auto">
-          <div className="min-w-[500px] h-64 sm:h-80 md:h-96 md:min-w-full bg-gray-200 rounded"></div>
-        </div>
-        <div className="mt-4 h-16 bg-gray-100 rounded"></div>
+      <div className="fs-glass fs-chart-card">
+        <div className="fs-sk fs-sk-h14 fs-sk-w40" />
+        <div className="fs-sk fs-sk-h220" />
+        <div className="fs-sk fs-sk-h44" />
       </div>
     );
   }
@@ -51,9 +46,9 @@ export default function SpendingTrendChart({ month, year }) {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 rounded-lg shadow-md border border-gray-200">
-          <p className="font-semibold text-gray-800">{label}</p>
-          <p className="text-red-500">Spent: ₹{payload[0].value}</p>
+        <div className="fs-glass fs-tooltip">
+          <div className="fs-tooltip__label">{label}</div>
+          <div className="fs-tooltip__red">Spent: ₹{payload[0].value}</div>
         </div>
       );
     }
@@ -68,81 +63,87 @@ export default function SpendingTrendChart({ month, year }) {
         cx={cx}
         cy={cy}
         r={6}
-        fill="#2563EB"
-        stroke="#fff"
+        fill="#34d399"
+        stroke="rgba(0,0,0,.45)"
         strokeWidth={2}
         style={{ cursor: "pointer", pointerEvents: "auto" }}
-        onClick={() => setSelectedPoint({ month: payload.name, expense: payload.expense })}
+        onClick={() => setSelectedPoint(
+          selectedPoint?.month === payload.name
+            ? null
+            : { month: payload.name, expense: payload.expense }
+        )}
       />
     );
   };
 
   return (
-    <div className="bg-white rounded-2xl p-4 shadow w-full">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="md:text-lg text-md font-semibold text-gray-800">Spending Trend</h3>
-        <p className="text-sm text-gray-500">Last 6 months</p>
+    <motion.div
+      className="fs-glass fs-chart-card"
+      initial={{ opacity: 0, x: -18 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.36, duration: 0.42 }}
+    >
+      <div className="fs-tx__header">
+        <h3 className="fs-chart-card__title">Spending Trend</h3>
+        <p className="fs-chart-card__sub">Last 6 months</p>
       </div>
 
-      <div className="overflow-x-auto">
-        <div className="min-w-[500px] h-64 sm:h-80 md:h-96 md:min-w-full">
+      
+      <div className="fs-trend__wrap">
+        <div className="fs-trend__inner">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.06)" />
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: "rgba(255,255,255,.42)" }}
                 axisLine={false}
               />
               <YAxis
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: "rgba(255,255,255,.42)" }}
                 axisLine={false}
                 tickFormatter={(value) => `₹${value}`}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,.08)" }} />
               <Line
                 type="monotone"
                 dataKey="expense"
-                stroke="#ef4444"
+                stroke="#34d399"
                 strokeWidth={3}
                 dot={(props) => renderCustomDot({ ...props, pointerEvents: true })}
-                activeDot={{ r: 8, fill: "#dc2626", style: { pointerEvents: "none" } }}
+                activeDot={{ r: 8, fill: "#34d399", style: { pointerEvents: "none" } }}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
+      
       <AnimatePresence>
         {selectedPoint && (
           <motion.div
+            className="fs-sel"
             initial={{ opacity: 0, y: 8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className="mt-4 bg-blue-50 border border-blue-100 rounded-lg p-4"
           >
-            <div className="flex justify-between items-start">
+            <div className="fs-sel__row">
               <div>
-                <p className="text-sm text-gray-600">Month</p>
-                <p className="font-semibold text-gray-800">{selectedPoint.month}</p>
+                <div className="fs-sel__lbl">Month</div>
+                <div className="fs-sel__val">{selectedPoint.month}</div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">You spent</p>
-                <p className="font-semibold text-red-600">₹{selectedPoint.expense}</p>
+              <div className="fs-sel__right">
+                <div className="fs-sel__lbl">You spent</div>
+                <div className="fs-sel__amt">₹{selectedPoint.expense}</div>
               </div>
             </div>
-            <div className="text-right mt-3">
-              <button
-                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                onClick={() => setSelectedPoint(null)}
-              >
-                Close
-              </button>
-            </div>
+            <button className="fs-sel__clear" onClick={() => setSelectedPoint(null)}>
+              Close
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

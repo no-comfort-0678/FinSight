@@ -30,11 +30,8 @@ const Navbar = () => {
       {/* Navigation Links - Only visible if logged in */}
       {user && (
         <div className="functions">
-          <button onClick={() => navigate("/home")} style={{ cursor: "pointer" }}>
-            Home
-          </button>
 
-          <div className="dropdown">
+          {/* <div className="dropdown">
             <button className="dropdown-trigger">Transactions</button>
             <div className="dropdown-content">
               <div 
@@ -50,7 +47,10 @@ const Navbar = () => {
                 Make Payment
               </div>
             </div>
-          </div>
+          </div> */}
+          <button onClick={() => navigate("/transactions/payments")} style={{ cursor: "pointer" }}>
+            Transactions
+          </button>
 
           <button onClick={() => navigate("/dashboard")} style={{ cursor: "pointer" }}>
             Dashboard

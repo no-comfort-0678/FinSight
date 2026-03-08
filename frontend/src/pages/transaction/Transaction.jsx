@@ -1,4 +1,4 @@
-
+import "./transaction.css";
 import { useState } from "react";
 import PaymentForm from "../../components/payments/paymentForm";
 import UploadBill from "../../components/dashboard/uploadbill";

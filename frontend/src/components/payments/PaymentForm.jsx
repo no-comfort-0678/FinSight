@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid"; // browser-compatible UUID
+import { v4 as uuidv4 } from "uuid";
 
 const API = "http://localhost:5000/api/v1/payments/send";
 
 export default function PaymentForm({ onSuccess }) {
-  const { user, token } = useAuth(); 
-  const [receiverId, setReceiverId] = useState("");
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { user, token } = useAuth();
+  const [receiverId,   setReceiverId]   = useState("");
+  const [amount,       setAmount]       = useState("");
+  const [description,  setDescription]  = useState("");
+  const [loading,      setLoading]      = useState(false);
   const navigate = useNavigate();
 
   const handleSend = async () => {
@@ -23,20 +23,20 @@ export default function PaymentForm({ onSuccess }) {
     setLoading(true);
 
     try {
-      const idempotencyKey = uuidv4(); // generate unique key
+      const idempotencyKey = uuidv4();
 
       const res = await fetch(API, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, 
+          Authorization: `Bearer ${token}`,
           "idempotency-key": idempotencyKey,
         },
         body: JSON.stringify({
-          senderAccountId: Number(senderAccountId),
+          senderAccountId:  Number(senderAccountId),
           receiverAccountId: Number(receiverId),
-          amount: Number(amount),
-          description: description || "",
+          amount:           Number(amount),
+          description:      description || "",
         }),
       });
 
@@ -59,68 +59,66 @@ export default function PaymentForm({ onSuccess }) {
   };
 
   return (
-    <div className="min-h-screen flex items-start justify-center pt-24">
-      <div className="w-full max-w-md bg-white/90 backdrop-blur-md rounded-2xl shadow-xl p-6 space-y-4">
-        <h1 className="text-2xl font-semibold">Make a Payment</h1>
+    <div className="fs-glass fs-form-card">
+      <h1 className="fs-form-card__title">Make a Payment</h1>
 
-        {/* Sender Account ID - Read Only */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Sender Account ID</label>
-          <input
-            type="number"
-            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring"
-            value={user.accountId || ""}
-            disabled
-          />
-        </div>
-
-        {/* Receiver Account ID */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Receiver Account ID</label>
-          <input
-            type="number"
-            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring"
-            placeholder="Receiver account ID"
-            value={receiverId}
-            onChange={(e) => setReceiverId(e.target.value)}
-          />
-        </div>
-
-        {/* Amount */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Amount</label>
-          <div className="flex items-center border rounded-lg px-3">
-            <span className="mr-2 text-gray-500">₹</span>
-            <input
-              type="number"
-              className="w-full py-2 focus:outline-none"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Description (optional)</label>
-          <input
-            type="text"
-            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring"
-            placeholder="What is this for?"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
-        <button
-          onClick={handleSend}
-          disabled={loading}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition disabled:opacity-50"
-        >
-          {loading ? "Sending..." : "Send Payment"}
-        </button>
+      {/* Sender Account ID — Read Only */}
+      <div className="fs-field">
+        <label className="fs-field__label">Sender Account ID</label>
+        <input
+          type="number"
+          className="fs-field__input"
+          value={user.accountId || ""}
+          disabled
+        />
       </div>
+
+      {/* Receiver Account ID */}
+      <div className="fs-field">
+        <label className="fs-field__label">Receiver Account ID</label>
+        <input
+          type="number"
+          className="fs-field__input"
+          placeholder="Receiver account ID"
+          value={receiverId}
+          onChange={(e) => setReceiverId(e.target.value)}
+        />
+      </div>
+
+      {/* Amount */}
+      <div className="fs-field">
+        <label className="fs-field__label">Amount</label>
+        <div className="fs-field__amount-wrap">
+          <span className="fs-field__prefix">₹</span>
+          <input
+            type="number"
+            className="fs-field__amount-input"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Description */}
+      <div className="fs-field">
+        <label className="fs-field__label">Description (optional)</label>
+        <input
+          type="text"
+          className="fs-field__input"
+          placeholder="What is this for?"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+
+      <button
+        onClick={handleSend}
+        disabled={loading}
+        className="fs-btn-submit"
+      >
+        {loading ? "Sending..." : "Send Payment"}
+      </button>
     </div>
   );
 }

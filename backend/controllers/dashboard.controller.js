@@ -60,11 +60,23 @@ export const getDashboardSummary = async (req, res) => {
         const totalReceived = monthlyTransactions
             .filter(t => t.amount > 0)
             .reduce((sum, t) => sum + t.amount, 0);
+        // const breakdown = {};
+        // consolidatedTransactions.forEach(t => {
+        //     const key = t.type === "expense" ? "Scanned Receipts" : (t.vendor || "Transfers");
+        //     if (!breakdown[key]) breakdown[key] = 0;
+        //     if (t.amount < 0) breakdown[key] += Math.abs(t.amount);
+        // });
+        
         const breakdown = {};
         consolidatedTransactions.forEach(t => {
-            const key = t.type === "expense" ? "Scanned Receipts" : (t.vendor || "Transfers");
+            const key = t.type === "expense"
+                ? "Scanned Receipts"
+                : (t.vendor || "Transfers"); // "Sent Payment" or "Received Payment"
+
             if (!breakdown[key]) breakdown[key] = 0;
-            if (t.amount < 0) breakdown[key] += Math.abs(t.amount);
+
+            // Use Math.abs so both sent AND received contribute their actual amount
+            breakdown[key] += Math.abs(t.amount);
         });
 
         res.json({
