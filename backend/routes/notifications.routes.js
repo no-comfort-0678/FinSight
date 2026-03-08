@@ -2,6 +2,7 @@ import express from "express";
 import { db, schema } from "../db/db.js";
 import { eq } from "drizzle-orm";
 import { protect } from "../middlewares/auth.middleware.js";
+import { sendEmailNotification } from "../services/email.service.js";
 
 const router = express.Router();
 
@@ -38,6 +39,14 @@ router.post("/", async (req, res) => {
             .insert(schema.notifications)
             .values({ userId, message, type })
             .returning();
+
+        // Send email notification
+        try {
+            await sendEmailNotification(userId, created);
+        } catch (emailError) {
+            console.error('Failed to send email notification:', emailError);
+            // Don't fail the request if email fails
+        }
 
         res.status(201).json(created);
     } catch (err) {
