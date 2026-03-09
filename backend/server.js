@@ -24,4 +24,5 @@ app.use("/api/receipts", receipts);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  startReminderScheduler();
 });

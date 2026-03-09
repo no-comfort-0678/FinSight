@@ -1,9 +1,12 @@
-import { pgTable, uuid, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import { users } from "./users.js";
 
 export const notifications = pgTable("notifications", {
-    id: uuid("id").defaultRandom().primaryKey(),
+    id: serial("id").primaryKey(),
 
-    userId: uuid("user_id").notNull(),
+    userId: integer("user_id")
+        .notNull()
+        .references(() => users.id, { onDelete: "cascade" }),
 
     message: varchar("message", { length: 500 }).notNull(),
     type: varchar("type", { length: 50 }),
