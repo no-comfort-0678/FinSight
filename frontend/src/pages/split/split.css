@@ -1,7 +1,16 @@
-/** * Comments: Strictly updated spacing for split record columns. 
- * Preserving all existing glassmorphism layouts.
- * Rule [2025-12-20]: Providing the whole code after changes.
+/** * Comments: Unified CSS for Finsight Split.
+ * Modal: Instant High-Velocity Left-to-Center Snap (Fling Style).
+ * Highlighting: Added quick yellow pulse 'tweak' for member names when added.
+ * UI Fix: RESTRICTED spacing to Main Table only. No Modal UI touched.
+ * Scroll Fix [2026-03-09]: Added internal scrolling to Lobby, History, and Modal.
+ * Layout Fix: Moved Member dropdown to the SIDE (Right) with internal scrolling to prevent cutoff.
+ * Rule: Providing the whole code after changes.
  */
+
+/* Custom Scrollbar for the whole app */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #e0c600; border-radius: 10px; }
 
 .split-page-main {
     width: 100%;
@@ -44,7 +53,7 @@
     margin-bottom: 40px;
 }
 
-/* MEMBER DROPDOWN STYLING */
+/* MEMBER DROPDOWN STYLING - FIXED TO SIDE */
 .member-dropdown-container {
     position: relative;
     display: inline-block;
@@ -65,16 +74,18 @@
 
 .member-dropdown-content {
     position: absolute;
-    bottom: 130%;
-    left: 50%;
-    transform: translateX(-50%) translateY(10px);
+    left: 110%; /* MOVED TO THE RIGHT SIDE */
+    top: 50%;
+    transform: translateY(-50%) translateX(-10px);
     background: rgb(32, 34, 30);
     backdrop-filter: blur(15px);
     border: 1px solid rgba(224, 198, 0, 0.3);
     border-radius: 12px;
     padding: 12px;
     min-width: 160px;
-    z-index: 1000;
+    max-height: 200px; /* HEIGHT LIMIT */
+    overflow-y: auto;   /* ENABLE INTERNAL SCROLL */
+    z-index: 10000;
     opacity: 0;
     visibility: hidden;
     transition: all 0.2s ease;
@@ -84,30 +95,68 @@
 .member-dropdown-container:hover .member-dropdown-content {
     opacity: 1;
     visibility: visible;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(-50%) translateX(0);
 }
 
 .dropdown-header { font-size: 0.65rem; color: #666; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 8px; }
 .dropdown-member-item { color: white; padding: 5px 0; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
 .user-dot { width: 6px; height: 6px; background: rgb(224, 198, 0); border-radius: 50%; }
 
-/* TABLE STYLING */
-.room-display-area { width: 100%; background: rgba(0,0,0,0.2); border-radius: 20px; overflow: visible; }
+/* --- FEATURE 1: MAIN LOBBY TABLE SCROLLING --- */
+.room-display-area { 
+    width: 100%; 
+    background: rgba(0,0,0,0.2); 
+    border-radius: 20px; 
+    overflow-y: auto !important; 
+    max-height: 500px;           
+    display: block;              
+}
+
 .split-table-ui { width: 100%; border-collapse: collapse; }
-.split-table-ui th { padding: 20px; text-align: left; color: rgb(224, 198, 0); font-size: 0.75rem; text-transform: uppercase; }
+.split-table-ui th { 
+    padding: 20px; 
+    text-align: left; 
+    color: rgb(224, 198, 0); 
+    font-size: 0.75rem; 
+    text-transform: uppercase;
+    position: sticky; 
+    top: 0;
+    background: #1a1c18;
+    z-index: 10;
+}
 .split-table-ui td { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+
+.split-table-ui th:last-child, .split-table-ui td:last-child {
+    text-align: right;
+    width: 320px; 
+}
+
+.table-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+}
 
 .room-name-bold { font-weight: 700; color: rgb(224, 198, 0); cursor: pointer; }
 .active-status-pill { background: rgba(0, 255, 0, 0.1); color: #00ff00; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; }
 
 .table-enter-btn { background: rgb(224, 198, 0); color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
 .table-enter-btn:hover { background: white; }
-.delete-room-btn { background: none; border: none; color: #ff4444; margin-left: 15px; cursor: pointer; opacity: 0.6; }
+.delete-room-btn { background: none; border: none; color: #ff4444; margin-left: 5px; cursor: pointer; opacity: 0.6; }
 .delete-room-btn:hover { opacity: 1; }
 
 /* GRID & MANAGER */
 .split-main-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 40px; margin-top: 30px; }
 .expense-form-card, .history-list-card { background: rgba(255, 255, 255, 0.02); padding: 30px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.05); }
+
+/* --- FEATURE 2: SPLIT HISTORY TABLE SCROLLING --- */
+.history-table-wrapper {
+    max-height: 450px !important; 
+    overflow-y: auto !important;  
+    display: block !important;
+    padding-right: 5px;
+}
 
 .input-group-v3 { margin-bottom: 20px; }
 .input-group-v3 label { font-size: 0.7rem; color: #666; font-weight: bold; margin-bottom: 8px; display: block; }
@@ -119,15 +168,91 @@
 
 /* HISTORY TABLE */
 .history-table-v3 { width: 100%; border-collapse: collapse; }
-.history-table-v3 th { text-align: left; color: #444; font-size: 0.7rem; padding: 12px; }
+.history-table-v3 th { 
+    text-align: left; 
+    color: #444; 
+    font-size: 0.7rem; 
+    padding: 12px;
+    position: sticky; 
+    top: 0;
+    background: #1a1c18;
+    z-index: 5;
+}
 .history-table-v3 td { padding: 15px 12px; border-bottom: 1px solid rgba(255,255,255,0.02); }
 .yellow-bold { color: rgb(224, 198, 0); font-weight: 800; }
 
-/* MODALS */
-.split-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 5000; }
-.split-modal-box { background: #1a1c18; border: 2px solid rgb(224, 198, 0); padding: 40px; border-radius: 25px; width: 450px; }
+/* --- HIGH-VELOCITY INSTANT FLING MODAL --- */
+.split-modal-overlay { 
+    position: fixed; 
+    inset: 0; 
+    background: rgba(0,0,0,0.85); 
+    backdrop-filter: blur(10px); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 5000; 
+}
+
+.split-modal-box { 
+    position: relative; 
+    background: #1a1c18; 
+    border: 2px solid rgb(224, 198, 0); 
+    padding: 40px; 
+    border-radius: 25px; 
+    width: 450px;
+    max-height: 90vh; 
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+    will-change: transform, opacity;
+    animation: splitwiseFlingCenter 0.25s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+/* --- FEATURE 3: MODAL MEMBER LIST SCROLLING --- */
+.member-detail-list {
+    max-height: 350px !important; 
+    overflow-y: auto !important;  
+    overflow-x: hidden;
+    padding-right: 10px;
+    margin: 15px 0;
+}
+
+.modal-close-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    cursor: pointer;
+}
+
+@keyframes splitwiseFlingCenter {
+    0% { transform: translate3d(-150vw, 0, 0); opacity: 0; }
+    100% { transform: translate3d(0, 0, 0); opacity: 1; }
+}
+
 .split-input-field { width: 100%; padding: 15px; background: #000; border: 1px solid #333; color: white; border-radius: 12px; margin: 10px 0; }
-.split-chip { background: #333; padding: 8px 15px; border-radius: 10px; margin: 5px; display: inline-block; font-size: 0.8rem; }
+
+/* REFINED CHIPS WITH TWEAK HIGHLIGHT */
+.split-chip-container { display: flex; flex-wrap: wrap; gap: 8px; }
+.split-chip { 
+    background: rgba(255, 255, 255, 0.05); 
+    border: 1px solid rgba(224, 198, 0, 0.3); 
+    padding: 8px 14px; 
+    border-radius: 10px; 
+    font-size: 0.85rem; 
+    font-weight: 600; 
+    color: #fff; 
+    display: grid; 
+    grid-template-columns: 1fr auto auto;
+    align-items: center; 
+    gap: 12px;
+    margin-bottom: 8px;
+    animation: nameHighlight 0.4s ease-out;
+}
+
+@keyframes nameHighlight {
+    0% { background: rgb(224, 198, 0); color: #000; transform: scale(1.02); }
+    100% { background: rgba(255, 255, 255, 0.05); color: #fff; transform: scale(1); }
+}
 
 .spin { animation: rotate 1s linear infinite; }
 @keyframes rotate { from {transform:rotate(0deg)} to {transform:rotate(360deg)} }
@@ -172,6 +297,27 @@
     font-size: 0.75rem;
     font-weight: 800;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn-sync {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #888;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.icon-btn-sync:hover {
+    color: #e0c600;
+    background: rgba(224, 198, 0, 0.1);
 }
 
 /* Spacing Helpers */
@@ -187,7 +333,7 @@
 .yellow-text { color: #e0c600; font-weight: 700; }
 .cursor-p { cursor: pointer; }
 
-/* SPACING ADJUSTMENT: Grid layout for record columns */
+/* SPACING ADJUSTMENT: Grid layout for record columns (RESTORED ORIGINAL) */
 .detail-row-static {
     display: grid;
     grid-template-columns: 1.5fr 1fr 0.8fr;
@@ -199,7 +345,7 @@
 
 /* --- EYE-CATCHING UNIVERSAL INPUT --- */
 .dynamic-share-input {
-    width: 100%; /* Spans the grid column */
+    width: 100%; 
     max-width: 90px;
     background: #000;
     border: 1px solid #333;
@@ -256,7 +402,7 @@
     40%, 60% { transform: translate3d(3px, 0, 0); }
 }
 
-/* --- Summary Modal Specifics --- */
+/* --- Summary Modal Specifics (RESTORED ORIGINAL) --- */
 .summary-list-v3 {
     max-height: 400px;
     overflow-y: auto;

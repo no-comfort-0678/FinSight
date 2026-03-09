@@ -8,11 +8,11 @@ import { pgTable, serial, varchar, integer, timestamp, numeric, boolean } from "
 export const rooms = pgTable("rooms", {
   id: serial("id").primaryKey(),
   roomName: varchar("room_name", { length: 255 }).notNull(),
-  members: varchar("members"), // Comma-separated usernames
+  members: varchar("members"), 
   ownerId: integer("owner_id"),
+  createdBy: varchar("created_by", { length: 255 }), // <--- ADD THIS
   createdAt: timestamp("created_at").defaultNow(),
 });
-
 export const splits = pgTable("splits", {
   id: serial("id").primaryKey(),
   roomId: integer("room_id").references(() => rooms.id, { onDelete: "cascade" }),

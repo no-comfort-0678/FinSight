@@ -1,16 +1,35 @@
 import express from "express";
 import { db } from "../db/db.js";
-import { notifications } from "../db/schema/notifications.js";
-import { eq } from "drizzle-orm";
+// We changed this line to import everything as 'schema'
+import * as schema from "../db/schema/notifications.js"; 
+import { eq, and } from "drizzle-orm";
 import { protect } from "../middlewares/auth.middleware.js";
 import { sendEmailNotification } from "../services/email.service.js";
 
 const router = express.Router();
 
-// ✅ All routes protected — userId comes from JWT, NOT hardcoded
+// ✅ All routes protected
 router.use(protect);
 
-// GET /api/notifications — Get all notifications for logged-in user
+// --- YOUR NEW ROUTE ---
+router.get("/personal/:id", async (req, res) => {
+    try {
+        const data = await db
+            .select()
+            .from(schema.notifications) // Updated to use schema. to match
+            .where(
+                and(
+                    eq(schema.notifications.roomId, parseInt(req.params.id)),
+                    eq(schema.notifications.isRead, false) 
+                )
+            );
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: "Fetch failed" });
+    }
+});
+
+// --- HIS ORIGINAL LOGIC (UNTOUCHED) ---
 router.get("/", async (req, res) => {
     try {
         const userId = req.user.id;
@@ -26,7 +45,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-// POST /api/notifications — Create a notification for logged-in user
+// POST /api/notifications
 router.post("/", async (req, res) => {
     try {
         const userId = req.user.id;
@@ -41,12 +60,10 @@ router.post("/", async (req, res) => {
             .values({ userId, message, type })
             .returning();
 
-        // Send email notification
         try {
             await sendEmailNotification(userId, created);
         } catch (emailError) {
             console.error('Failed to send email notification:', emailError);
-            // Don't fail the request if email fails
         }
 
         res.status(201).json(created);
@@ -56,7 +73,7 @@ router.post("/", async (req, res) => {
     }
 });
 
-// PATCH /api/notifications/:id/read — Mark a notification as read
+// PATCH /api/notifications/:id/read
 router.patch("/:id/read", async (req, res) => {
     try {
         const id = Number(req.params.id);
@@ -73,7 +90,7 @@ router.patch("/:id/read", async (req, res) => {
     }
 });
 
-// DELETE /api/notifications/:id — Delete a notification
+// DELETE /api/notifications/:id
 router.delete("/:id", async (req, res) => {
     try {
         const id = Number(req.params.id);

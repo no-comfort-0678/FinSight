@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback } from "react";
 import "./notifs.css";
 import { useAuth } from "../../context/AuthContext";
 
+
 const API_BASE = "http://localhost:5000/api/v1/reminders";
+
 
 function Notifs() {
   const [activeTab, setActiveTab] = useState("reminders");
@@ -22,6 +24,7 @@ function Notifs() {
 
   const [reminders, setReminders] = useState([]);
   const [notifications, setNotifications] = useState([]);
+
 
   // ─── Fetch reminders from backend ─────────────────────────────────────────
   const fetchReminders = useCallback(async () => {
@@ -51,6 +54,39 @@ function Notifs() {
       setLoading(false);
     }
   }, [token]);
+
+
+  // --- NEW: FETCH ROOM NOTIFICATIONS ---
+  useEffect(() => {
+    const fetchMyNotifs = async () => {
+      try {
+        if (!user || !user.id) return;
+        // Adjusted URL: removing /api if your base path is just /notifications
+        const response = await fetch(`http://localhost:5000/api/notifications/personal/${user.id}`);
+        const data = await response.json();
+        
+        const mapped = data.map(n => ({
+          id: n.id,
+          text: n.message,
+          createdAt: n.createdAt,
+          unread: !n.isRead,
+          type: "lifetime" 
+        }));
+
+        setNotifications(prev => {
+            // Simple filter to prevent duplicates in state during the same session
+            const existingIds = new Set(prev.map(p => p.id));
+            const newNotifs = mapped.filter(m => !existingIds.has(m.id));
+            return [...newNotifs, ...prev];
+        });
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+      }
+    };
+    fetchMyNotifs();
+  }, [user]);
+
+  // --- HIS ORIGINAL REMINDER LOGIC (Untouched) ---
 
   useEffect(() => {
     fetchReminders();
@@ -106,8 +142,20 @@ function Notifs() {
     return now - new Date(notifDate) < oneMonthInMs;
   };
 
-  const removeNotif = (id) => {
+  // --- UPDATED: REMOVE NOTIF (Syncs with DB) ---
+  const removeNotif = async (id) => {
+    // 1. Remove from local UI immediately
     setNotifications((prev) => prev.filter((n) => n.id !== id));
+
+    try {
+        // 2. Tell the database this is READ so it doesn't return on refresh
+        // This uses the existing ID from your database results
+        await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+            method: 'PATCH'
+        });
+    } catch (err) {
+        console.error("Failed to mark as read in DB:", err);
+    }
   };
 
   // ─── Create / Update reminder ─────────────────────────────────────────────

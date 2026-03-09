@@ -2,10 +2,13 @@
  * Comments: Full Backend Controller. 
  * Fixed: Restored the missing joinSplit function.
  * Added: bulkUpdateManualAmounts for the new Save button logic.
- * Rules: Providing the whole code after changes [2025-12-20].
+ * Added: Safety check to prevent negative shares.
+ * Rules: Providing the whole code after changes [2026-03-09].
  */
 import { db } from "../db/db.js"; 
 import { rooms, splits, splitMembers} from "../db/schema/splits.js";
+import { notifications} from "../db/schema/notifications.js";
+import { users } from "../db/schema/users.js";
 import { eq, and, sql, desc, ilike, or } from "drizzle-orm";
 
 // --- ROOM FUNCTIONS ---
@@ -20,11 +23,12 @@ export const getRooms = async (req, res) => {
 
 export const createRoom = async (req, res) => {
     try {
-        const { roomName, members, ownerId } = req.body;
+        const { roomName, members, ownerId, createdBy } = req.body; 
         const [newRoom] = await db.insert(rooms).values({
             roomName,
             members: Array.isArray(members) ? members.join(',') : members,
-            ownerId: parseInt(ownerId)
+            ownerId: parseInt(ownerId),
+            createdBy: createdBy 
         }).returning();
         res.status(200).json({ message: "Room Created", id: newRoom.id });
     } catch (err) { res.status(500).json({ error: "Room creation failed" }); }
@@ -37,11 +41,67 @@ export const deleteRoom = async (req, res) => {
     } catch (err) { res.status(500).json({ error: "Deletion failed" }); }
 };
 
+//SINGLE AND MULTI INVITATION:
+export const inviteBatch = async (req, res) => {
+    try {
+        const { targetUsernames, roomId, roomName, senderName } = req.body;
+
+        const [room] = await db.select().from(rooms).where(eq(rooms.id, parseInt(roomId)));
+        if (!room) return res.status(404).json({ error: "Room not found" });
+
+        let currentMembers = room.members ? room.members.split(',').map(m => m.trim()) : [];
+
+        for (const username of targetUsernames) {
+            if (currentMembers.includes(username)) continue;
+            currentMembers.push(username);
+
+            const [foundUser] = await db.select().from(users).where(eq(users.username, username));
+            
+            const HIS_UUID = "00000000-0000-0000-0000-000000000001";
+
+            if (foundUser) {
+                try {
+                    await db.insert(notifications).values({
+                        userId: HIS_UUID, 
+                        roomId: foundUser.id, 
+                        message: `${senderName} added you to ${roomName}`,
+                        type: "ROOM_ADD",
+                        isRead: false
+                    });
+                } catch (notifyErr) {
+                    console.error("Insert failed:", notifyErr.message);
+                }
+            }
+        }
+
+        await db.update(rooms)
+            .set({ members: currentMembers.join(',') })
+            .where(eq(rooms.id, parseInt(roomId)));
+
+        res.status(200).json({ message: "Users added and notified" });
+    } catch (err) {
+        console.error("Invite Batch Error:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
 // --- SPLIT & HISTORY ---
 export const finalizeSplit = async (req, res) => {
     try {
         const { description, totalAmount, paidBy, roomId, friends, splitType } = req.body;
         const gross = parseFloat(totalAmount);
+
+        // --- SAFETY CHECK: NO NEGATIVE PAYER SHARE ---
+        const friendsTotal = friends.reduce((sum, f) => sum + parseFloat(f.amount || 0), 0);
+        const payerAmt = gross - friendsTotal;
+
+        if (payerAmt < 0) {
+            return res.status(400).json({ 
+                error: "NEGATIVE_PAYER_SHARE", 
+                message: "Alert: Total friend shares exceed the bill! Payer cannot have a negative amount." 
+            });
+        }
+
         const [insertedSplit] = await db.insert(splits).values({
             description, totalAmount: gross, paidBy, roomId: parseInt(roomId), splitType: splitType || 'equal'
         }).returning();
@@ -51,10 +111,9 @@ export const finalizeSplit = async (req, res) => {
             amount: parseFloat(f.amount || 0), status: 'pending', isLocked: splitType === 'manual'
         }));
 
-        const friendsTotal = friends.reduce((sum, f) => sum + parseFloat(f.amount || 0), 0);
         entries.push({
             splitId: insertedSplit.id, roomId: parseInt(roomId), username: paidBy,
-            amount: parseFloat((gross - friendsTotal).toFixed(2)), status: 'paid', isLocked: splitType === 'manual'
+            amount: parseFloat(payerAmt.toFixed(2)), status: 'paid', isLocked: splitType === 'manual'
         });
 
         await db.insert(splitMembers).values(entries);
@@ -93,7 +152,6 @@ export const joinSplit = async (req, res) => {
         const [splitRec] = await db.select().from(splits).where(eq(splits.id, splitId));
         const all = await db.select().from(splitMembers).where(eq(splitMembers.splitId, splitId));
         
-        // If it's an equal split, we redistribute. If manual, we join with 0.00.
         if (splitRec.splitType === 'equal') {
             const joinAmt = parseFloat(splitRec.totalAmount) / (all.length + 1);
             const unlocked = all.filter(m => m.isLocked === false);
@@ -111,7 +169,6 @@ export const joinSplit = async (req, res) => {
                 });
             });
         } else {
-            // Manual Mode: New joiners start at 0.00 and must be adjusted manually
             await db.insert(splitMembers).values({ 
                 splitId, roomId: splitRec.roomId, username, amount: "0.00", 
                 status: 'pending', isLocked: true 
@@ -151,6 +208,10 @@ export const updateMemberAmount = async (req, res) => {
     try {
         const { splitId, targetUsername, newAmount } = req.body;
         const newA = parseFloat(newAmount);
+
+        // --- SAFETY CHECK: NO NEGATIVE MANUAL ENTRY ---
+        if (newA < 0) return res.status(400).json({ error: "Amount cannot be negative" });
+
         const [splitRec] = await db.select().from(splits).where(eq(splits.id, splitId));
         const all = await db.select().from(splitMembers).where(eq(splitMembers.splitId, splitId));
 
