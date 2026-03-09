@@ -6,3 +6,4 @@ export * from "./ledger.js";
 export * from "./expenses.js";
 export * from "./reminders.js";
 export * from "./notifications.js";
+export * from "./splits.js"; 

@@ -1,14 +1,15 @@
 import React, { useState, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
-import Tesseract from "tesseract.js";
+import { useNavigate } from "react-router-dom";
 
-const API_BASE = "http://localhost:5000/api/v1/expenses";
+const API_BASE = "http://localhost:5000/api/receipts/upload";
 
 const UploadBill = ({ onSuccess }) => {
-  const { token } = useAuth();
-  const [file, setFile] = useState(null);
-  const [status, setStatus] = useState("");
-  const [progress, setProgress] = useState(0);
+  const { user, token } = useAuth();
+  const navigate        = useNavigate();
+  const [file,    setFile]    = useState(null);
+  const [status,  setStatus]  = useState("");
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleFileChange = async (e) => {
@@ -16,59 +17,49 @@ const UploadBill = ({ onSuccess }) => {
     if (!uploaded) return;
 
     setFile(uploaded);
-    setStatus("Scanning bill...");
-    setProgress(0);
+    setStatus("Processing bill...");
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("receipt", uploaded);
+    formData.append("userId", user.id);
 
     try {
-      const { data } = await Tesseract.recognize(uploaded, "eng", {
-        logger: (m) => {
-          if (m.status === "recognizing text") setProgress(Math.floor(m.progress * 100));
-        },
-      });
-
-      const ocrText = data.text || "";
-      setStatus("Uploading OCR text...");
-
-      // send OCR text to backend
-      const res = await fetch(`${API_BASE}/upload`, {
+      const res = await fetch(API_BASE, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ocrText,
-          fileUrl: "",    // optional
-          fileBuffer: "", // optional
-        }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || "Upload failed");
+        throw new Error(errData.error || "Upload failed");
       }
 
       const dataResp = await res.json();
-      setStatus("Bill uploaded successfully!");
-      setFile(null);
-      setProgress(0);
+      setStatus("Bill uploaded and processed!");
+
       onSuccess?.(dataResp);
 
+      setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
       console.error(err);
       setStatus(err.message || "Failed to process bill");
-      setProgress(0);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: "500px", margin: "20px auto" }}>
-      <h3>Upload Bill</h3>
-      {!file ? (
-        <div
-          onClick={() => fileInputRef.current.click()}
-          style={{ cursor: "pointer", padding: "20px", border: "1px dashed gray", textAlign: "center" }}
-        >
+    <div className="fs-glass fs-form-card">
+      <h2 className="fs-form-card__title">Upload Bill</h2>
+      <p className="fs-form-card__desc">
+        Upload an image of your receipt to automatically extract expense details.
+      </p>
+
+      {!file && !loading ? (
+        /* ── Drop zone ── */
+        <div className="fs-dropzone" onClick={() => fileInputRef.current.click()}>
           <input
             type="file"
             hidden
@@ -76,12 +67,39 @@ const UploadBill = ({ onSuccess }) => {
             onChange={handleFileChange}
             accept="image/*,application/pdf"
           />
-          <p>Click to Upload Bill</p>
+          <svg
+            className="fs-dropzone__icon"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
+              d="7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+            />
+          </svg>
+          <p className="fs-dropzone__text">Click to upload or drag &amp; drop</p>
+          <p className="fs-dropzone__hint">PNG, JPG or PDF up to 10MB</p>
         </div>
       ) : (
-        <div style={{ padding: "10px" }}>
-          <p>{status}</p>
-          {progress > 0 && progress < 100 && <p>Progress: {progress}%</p>}
+        /* ── Status panel ── */
+        <div className="fs-upload-status">
+          {loading && <div className="fs-upload-spinner" />}
+          <p className={`fs-upload-status__text ${
+            loading
+              ? "fs-upload-status__text--proc"
+              : status.includes("failed") || status.includes("Failed")
+              ? "fs-upload-status__text--error"
+              : "fs-upload-status__text--success"
+          }`}>
+            {status}
+          </p>
+          {!loading && (
+            <button
+              className="fs-upload-again"
+              onClick={() => { setFile(null); setStatus(""); }}
+            >
+              Upload another
+            </button>
+          )}
         </div>
       )}
     </div>

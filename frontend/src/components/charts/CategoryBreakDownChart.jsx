@@ -3,35 +3,27 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 
-const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#06B6D4", "#F97316", "#EC4899"];
+const COLORS = ["#e0c600","#10B981","#F97316","#3B82F6","#EF4444","#8B5CF6","#06B6D4","#EC4899"];
 
 export default function CategoryBreakdownChart({ month, year }) {
   const { user, token } = useAuth();
   const [data, setData] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [selected, setSelected] = useState(null);   
+  const [isLoading, setIsLoading] = useState(true); 
 
   useEffect(() => {
     if (!user || !token) return;
 
-    const fetchPayments = async () => {
+    const fetchBreakdown = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/v1/payments/user", {
+        const res = await fetch("http://localhost:5000/api/v1/dashboard/summary", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error("Failed to fetch payments");
-        const payments = await res.json();
-        const filtered = payments.filter((p) => {
-          const date = new Date(p.createdAt);
-          return (!month || date.getMonth() + 1 === month) && (!year || date.getFullYear() === year);
-        });
-        const breakdown = {};
-        filtered.forEach((p) => {
-          const category = p.description?.toUpperCase() || "UNCATEGORIZED";
-          breakdown[category] = (breakdown[category] || 0) + Number(p.amount);
-        });
+        if (!res.ok) throw new Error("Failed to fetch dashboard summary");
+        const summary = await res.json();
 
+        const breakdown = summary.breakdown || {};
         const total = Object.values(breakdown).reduce((a, b) => a + b, 0);
 
         const pieData = Object.entries(breakdown).map(([name, value]) => ({
@@ -48,16 +40,16 @@ export default function CategoryBreakdownChart({ month, year }) {
       }
     };
 
-    fetchPayments();
+    fetchBreakdown();
   }, [user, token, month, year]);
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload?.length) {
       return (
-        <div className="bg-white p-3 rounded-lg shadow-md border border-gray-200">
-          <p className="font-semibold text-gray-800">{payload[0].name}</p>
-          <p className="text-blue-600">₹{payload[0].value.toLocaleString()}</p>
-          <p className="text-gray-500">{payload[0].payload.percent}% of total</p>
+        <div className="fs-tooltip">
+          <div className="fs-tooltip__label">{payload[0].name}</div>
+          <div className="fs-tooltip__gold">₹{payload[0].value.toLocaleString()}</div>
+          <div className="fs-tooltip__sub">{payload[0].payload.percent}% of total</div>
         </div>
       );
     }
@@ -66,19 +58,24 @@ export default function CategoryBreakdownChart({ month, year }) {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl p-4 shadow w-full animate-pulse h-96" />
+      <div className="fs-glass fs-chart-card">
+        <div className="fs-sk fs-sk-h14 fs-sk-w50" />
+        <div className="fs-sk fs-sk-h220" />
+      </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-lg w-full">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="md:text-lg text-md font-semibold text-gray-800">Category Breakdown</h3>
-        <p className="text-sm text-gray-500">Monthly Expenses</p>
+    <div className="fs-glass fs-chart-card">
+      <div className="fs-tx__header">
+        <h3 className="fs-chart-card__title">Category Breakdown</h3>
+        <p className="fs-chart-card__sub">Monthly Expenses</p>
       </div>
 
-      <div className="flex flex-col md:flex-row items-center">
-        <div className="w-full md:w-1/2 h-64">
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
+
+        {/* Pie */}
+        <div style={{ width:"100%", height:220 }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -88,11 +85,11 @@ export default function CategoryBreakdownChart({ month, year }) {
                 innerRadius={60}
                 outerRadius={80}
                 paddingAngle={2}
-                onClick={(entry) => setSelected({ 
-                  category: entry.name, 
-                  percent: entry.percent, 
-                  amount: entry.value 
-                })}
+                onClick={(entry) => setSelected(
+                  selected?.category === entry.name
+                    ? null
+                    : { category: entry.name, percent: entry.percent, amount: entry.value }
+                )}
                 labelLine={false}
               >
                 {data.map((entry, idx) => (
@@ -110,64 +107,54 @@ export default function CategoryBreakdownChart({ month, year }) {
           </ResponsiveContainer>
         </div>
 
-        <div className="w-full md:w-1/2 mt-6 md:mt-0 md:pl-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {data.map((entry, idx) => (
-              <div
-                key={idx}
-                className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                  selected?.category === entry.name ? 'border-blue-300 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
-                }`}
-                onClick={() => setSelected({ 
-                  category: entry.name, 
-                  percent: entry.percent, 
-                  amount: entry.value 
-                })}
-              >
-                <div className="flex items-center">
-                  <div
-                    className="w-3 h-3 rounded-full mr-2"
-                    style={{ backgroundColor: COLORS[idx % COLORS.length] }}
-                  />
-                  <span className="text-sm font-medium text-gray-700 truncate">{entry.name}</span>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {entry.percent}% • ₹{entry.value.toLocaleString()}
-                </div>
+        
+        <div className="fs-legend">
+          {data.map((entry, idx) => (
+            <div
+              key={idx}
+              className={`fs-legend__item${selected?.category === entry.name ? " fs-legend__item--active" : ""}`}
+              onClick={() => setSelected(
+                selected?.category === entry.name
+                  ? null
+                  : { category: entry.name, percent: entry.percent, amount: entry.value }
+              )}
+            >
+             
+              <div className="fs-legend__dot" style={{ background: COLORS[idx % COLORS.length] }} />
+              <div>
+                <div className="fs-legend__name">{entry.name}</div>
+                <div className="fs-legend__pct">{entry.percent}% · ₹{entry.value.toLocaleString()}</div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
+
       </div>
 
+      
       <AnimatePresence>
         {selected && (
           <motion.div
+            className="fs-sel"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg"
           >
-            <div className="flex justify-between items-start">
+            <div className="fs-sel__row">
               <div>
-                <p className="text-sm text-gray-600 font-medium">Selected Category</p>
-                <p className="text-lg font-semibold text-gray-800">{selected.category}</p>
+                <div className="fs-sel__lbl">Selected Category</div>
+                <div className="fs-sel__val">{selected.category}</div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Amount</p>
-                <p className="text-lg font-semibold text-blue-600">₹{selected.amount.toLocaleString()}</p>
+              <div className="fs-sel__right">
+                <div className="fs-sel__lbl">Amount</div>
+                <div className="fs-sel__amt">₹{selected.amount.toLocaleString()}</div>
               </div>
             </div>
-            <div className="mt-3 flex justify-between items-center">
-              <p className="text-sm text-gray-600">{selected.percent}% of total expenses</p>
-              <button
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                onClick={() => setSelected(null)}
-              >
-                Clear Selection
-              </button>
-            </div>
+            <div className="fs-sel__pct">{selected.percent}% of total expenses</div>
+            <button className="fs-sel__clear" onClick={() => setSelected(null)}>
+              Clear Selection ✕
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

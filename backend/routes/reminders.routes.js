@@ -1,12 +1,7 @@
 import express from "express";
-import { protect } from "../middlewares/auth.middleware.js";
-import {
-    getReminders,
-    createReminder,
-    updateReminder,
-    deleteReminder,
-    markNotified,
-} from "../controllers/reminders.controller.js";
+import { db } from "../db/db.js";
+import { reminders } from "../db/schema/reminders.js";
+import { eq } from "drizzle-orm";
 
 const router = express.Router();
 

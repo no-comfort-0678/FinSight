@@ -1,456 +1,214 @@
-import { useState, useEffect, useRef } from "react";
-import './split.css';
+/**
+ * Comments: Clean Lobby focused on Room Management.
+ * Logic: Removed global summary to focus on room navigation.
+ * All debt calculations are now handled inside RoomSplitManager.
+ */
+import React, { useState, useEffect, useCallback } from "react";
+import { 
+  Users, Plus, Trash2, Zap, X, RefreshCw, 
+  UserPlus, ArrowUpRight, TrendingUp
+} from "lucide-react";
+import { useAuth } from "../../context/AuthContext"; 
+import RoomSplitManager from "./RoomSplitManager"; 
+import "./split.css";
 
 const API = "http://localhost:5000/split";
 
-export default function App() {
-  const [userExists, setUserExists] = useState(false);
-  const [showNewSplitModal, setShowNewSplitModal] = useState(false);
-  const [splitName, setSplitName] = useState("");
+const Split = () => {
+  const { user } = useAuth(); 
   
-  const [username, setUsername] = useState("");
-  const [manualAmount, setManualAmount] = useState("");
-  const [userError, setUserError] = useState(false);
-  const [amountError, setAmountError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [splitMode, setSplitMode] = useState("Equal"); 
+  const [rooms, setRooms] = useState([]);
+  const [activeRoom, setActiveRoom] = useState(null); 
+  const [roomName, setRoomName] = useState("");
+  const [newMember, setNewMember] = useState("");
+  const [tempMembers, setTempMembers] = useState([]);
+  const [showRoomModal, setShowRoomModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const[splitRecords,setSplitRecords]=useState([]);
-  const [friendsList, setFriendsList] = useState([]);
-  const [currentUser, setCurrentUser] = useState("");
-  const[selectedSplit,setSelectedSplit]=useState(null);
-  const billInputRef = useRef(null);
-
-  useEffect(() => {
-    const loggedInData = localStorage.getItem("user");
-    if (loggedInData) {
-      const foundUser = JSON.parse(loggedInData);
-      setCurrentUser(foundUser.username); 
-    }
-  }, []);
-
-
-  useEffect(() => {
-    getsplitRecords(); // Runs once when the page is born
-}, []);
-
-
-  const confirmNewSplit = () => {
-    if (!splitName.trim()) return;
-    
-    setFriendsList([]);
-
-    setTotalAmount(0);
-    setManualAmount("");
-    setUsername("");
-    setShowNewSplitModal(false);
-    setTimeout(() => {
-        if (billInputRef.current) billInputRef.current.focus();
-    }, 100);
-  };
-
-  const takename = (e) => {
-    setUsername(e.target.value);
-    if (userError) setUserError(false);
-  }
-
-  const handleAmountSubmit = (e) => {
-    if (e.key === 'Enter' && totalAmount > 0) {
-      setUserExists(true); 
-    }
-  }
-
-  const currentSplitTotal = friendsList.reduce((acc, curr) => acc + parseFloat(curr.manualVal || 0), 0);
-
-
-
-
-
-
-
-  const checkuser = async (value) => {
-    if (!value.trim()) return;
-    setUserError(false);
-    setAmountError(false);
-
-    if (currentUser && value.toLowerCase() === currentUser.toLowerCase()) {
-      setErrorMessage("You cannot add yourself!");
-      setUserError(true);
-      setTimeout(() => setUserError(false), 3000);
-      return;
-    }
-
-    if (splitMode === "Manual") {
-      const entryAmt = parseFloat(manualAmount) || 0;
-      if (entryAmt <= 0 || (currentSplitTotal + entryAmt > totalAmount)) {
-        setErrorMessage(entryAmt <= 0 ? "Invalid Amount!" : "Amount Exceeded!");
-        setAmountError(true);
-        setTimeout(() => setAmountError(false), 3000);
-        return;
-      }
-    }
-
+  const fetchRooms = useCallback(async () => {
+    if (!user?.username) return;
+    setLoading(true);
     try {
-      const res = await fetch(`${API}/users`);
+      const res = await fetch(`${API}/rooms?username=${user.username}`);
       const data = await res.json();
-      const found = data.find((user) => user.username === value);
-
-      if (found) {
-        if (!friendsList.find(f => f.username === found.username)) {
-            setFriendsList([...friendsList, { 
-              username: found.username, 
-              manualVal: splitMode === "Equal" ? null : manualAmount 
-            }]);
-        }
-        setUserExists(false); 
-        setUsername("");
-        setManualAmount("");
-      } else {
-        setErrorMessage("User Not Found!");
-        setUserError(true);
-        setTimeout(() => setUserError(false), 3000);
-      }
+      setRooms(data);
     } catch (err) {
-      setErrorMessage("Server Offline!");
-      setUserError(true);
-      setTimeout(() => setUserError(false), 3000);
+      setError("Sync Error: Could not reach Database.");
+    } finally {
+      setLoading(false);
     }
-  }
+  }, [user]);
 
+  const handleCreateRoom = async () => {
+    if (!roomName.trim()) return alert("Please enter a Group Name.");
+    if (tempMembers.length === 0) return alert("Please add members.");
 
-
-
-
-  const getOwedAmount = (friend) => {
-    if (splitMode === "Equal") {
-      return (totalAmount / (friendsList.length + 1)).toFixed(2);
-    }
-    return friend.manualVal || "0.00";
-  }
-
-
-
-
-
-
-  const finalizeSplit = async () => {
-    if (friendsList.length === 0) return;
-
-    const splitData = {
-        description: splitName || `Group Split: ₹${totalAmount}`,
-        totalAmount: totalAmount,
-        paidBy: currentUser,
-        friends: friendsList.map(f => ({
-            username: f.username,
-            amount: getOwedAmount(f)
-        }))
+    const payload = {
+      roomName: roomName.trim(),
+      members: [...tempMembers, user.username],
+      ownerId: user.id
     };
 
     try {
-        const response = await fetch(`${API}/finalize`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(splitData)
-        });
-        const result = await response.json();
-
-        alert(result.message);
-        if(result.ok)
-        await getsplitRecords(); 
-  
-        setFriendsList([]);
-        setTotalAmount(0);
-        setSplitName("");
-    } 
-    
-    catch (err) {
-        alert("Failed to connect to server.");
+      setLoading(true);
+      const res = await fetch(`${API}/create-room`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setShowRoomModal(false);
+        setRoomName("");
+        setTempMembers([]);
+        await fetchRooms();
+      }
+    } catch (err) {
+      alert("Network Error.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const deleteRoom = async (roomId) => {
+    if(!window.confirm("Are you sure?")) return;
+    try {
+      const res = await fetch(`${API}/delete-room/${roomId}`, { method: 'DELETE' });
+      if(res.ok) setRooms(prev => prev.filter(r => r.id !== roomId));
+    } catch (err) { alert("Delete failed."); }
+  };
 
-const getsplitRecords= async () => {
-   try {
-        const response = await fetch(`${API}/history`);
-        const data = await response.json();
-        
-     
-        const formattedData = data.map(record => ({
-            ...record,
-            friends: typeof record.friends === 'string' ? JSON.parse(record.friends) : record.friends
-        }));
+  useEffect(() => { fetchRooms(); }, [fetchRooms]);
 
-        setSplitRecords(formattedData);
-    } catch (err) {
-        console.error("Error loading history:", err);
-    }
-}
+  if (!user) return null;
 
-  
-
-
-
-  const closeModal = () => {
-    setUserExists(false);
-    setShowNewSplitModal(false);
-    setUserError(false);
-    setAmountError(false);
+  if (activeRoom) {
+    return (
+      <RoomSplitManager 
+        activeRoom={activeRoom} 
+        user={user} 
+        onBack={() => {
+          setActiveRoom(null);
+          fetchRooms(); 
+        }} 
+      />
+    );
   }
 
-
-
-
   return (
-    <div className="scroll-container">
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&family=Orbitron:wght@500;700&display=swap');
-      </style>
-
-      <div className={(!userExists && !showNewSplitModal) ? "main-wrapper" : "main-wrapper blurred"}>
-        
-        <div className="banner-card">
-            <h2 className="banner-title">Split Expenses <span className="thunder-icon">⚡</span></h2>
-            <p className="banner-welcome">Welcome back, {currentUser || "Guest"}</p>
-        </div>
-
-        <div className="controls-glass-box">
-
-
-
-          <div className="control-group">
-            <label className="fancy-label">Total Bill</label>
-            <div className="input-field-wrapper">
-              <span className="currency-symbol">₹</span>
-              <input 
-                ref={billInputRef}
-                type="number" 
-                className="main-amount-input" 
-                placeholder="0.00" 
-                value={totalAmount || ""}
-                onKeyDown={handleAmountSubmit}
-                onChange={(e) => setTotalAmount(parseFloat(e.target.value) || 0)}
-              />
-            </div>
+    <div className="split-page-main">
+      <div className="split-card-container">
+        <div className="split-top-bar">
+          <div className="brand-stack">
+            <h1 className="yellow-title">FINSIGHT SPLIT <Zap size={24} style={{fill:'rgb(224, 198, 0)'}}/></h1>
+            <p className="subtitle-text">Collective expense management (PostgreSQL)</p>
           </div>
-
-          <div className="control-group center-align">
-            <label className="fancy-label">Action</label>
-            <button className="add-user-btn" onClick={() => setUserExists(true)}>
-              + Add User
-              {friendsList.length > 0 && <span className="user-count-badge">{friendsList.length}</span>}
+          <div className="split-actions">
+            <button title="Refresh Sync" className="icon-btn-sync" onClick={fetchRooms}>
+              <RefreshCw size={18} className={loading ? "spin" : ""}/>
+            </button>
+            
+            <button className="btn-create-new" onClick={() => setShowRoomModal(true)}>
+              <Plus size={18} /> NEW ROOM
             </button>
           </div>
-
-
-
-          <div className="control-group">
-            <label className="fancy-label">Split Method</label>
-            <div className="split-type-toggle">
-              <button 
-                className={splitMode === "Equal" ? "toggle-btn active" : "toggle-btn"} 
-                onClick={() => { setSplitMode("Equal"); setFriendsList([]); }}
-              >Equal</button>
-              <button 
-                className={splitMode === "Manual" ? "toggle-btn active" : "toggle-btn"} 
-                onClick={() => { setSplitMode("Manual"); setFriendsList([]); }}
-              >Manual</button>
-            </div>
-          </div>
-
-
-
         </div>
 
-        
-        <div className="action-buttons-wrapper">
-            <button className="grey-sync-btn" onClick={() => setShowNewSplitModal(true)}>New Split</button>
-            <button className="grey-sync-btn" onClick={finalizeSplit}>Confirm Split</button>
-        </div>
-
-
-
-
-
-     
-        {/* This is code for checking adding users (ui) */}
-        {userExists && (
-          <div className="modal-overlay">
-            <div className="split_amount_card big-ui interactive-card">
-                <button className="modal-close-x" onClick={closeModal}>&times;</button>
-                <div className="modal-header">
-                  <h2 className="modal-title-big">{splitMode === "Equal" ? "Add Friend" : "Manual Entry"}</h2>
-                  <p className="modal-subtext-big">Splitting ₹{totalAmount}</p>
-                </div>
-                <div className="modal-body-big">
-                  <label className={`modal-label-fancy-big ${userError ? "label-error" : ""}`}>
-                    {userError ? errorMessage : "FRIEND USERNAME"}
-                  </label>
-                  <div className={`input-field-wrapper-big ${userError ? "vibrate-error" : ""}`}>
-                    <input 
-                      className="split_userchecking_big" 
-                      type="text" 
-                      placeholder="Type username..." 
-                      autoFocus
-                      value={username} 
-                      onKeyDown={(e) => { if (e.key === 'Enter') { checkuser(username); } }}  
-                      onChange={takename} 
-                    />
-                  </div>
-
-
-                  {/* This is manual mode (ui) */}
-                  {splitMode === "Manual" && (
-                    <div style={{marginTop: '30px'}}>
-                      <label className={`modal-label-fancy-big ${amountError ? "label-error" : ""}`}>
-                        {amountError ? errorMessage : "AMOUNT (₹)"}
-                      </label>
-                      <div className={`input-field-wrapper-big ${amountError ? "vibrate-error" : ""}`}>
-                         <input 
-                            className="split_userchecking_big" 
-                            type="number" 
-                            placeholder="0.00"
-                            value={manualAmount}
-                            onChange={(e) => setManualAmount(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') { checkuser(username); } }}
-                         />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="modal-footer-big">
-                  <button className="confirm-btn-big" onClick={() => checkuser(username)}>CONFIRM ENTRY</button>
-                </div>
+        <div className="room-display-area">
+          {rooms.length === 0 && !loading ? (
+            <div className="no-rooms-msg">
+              <Users size={48} className="fade-icon"/>
+              <p>No active rooms found.</p>
             </div>
-          </div>
-        )}
-
-
-
-
-        {/* This is ui for giving name to split */}
-        {showNewSplitModal && (
-          <div className="modal-overlay">
-            <div className="split_amount_card big-ui interactive-card">
-                <button className="modal-close-x" onClick={closeModal}>&times;</button>
-                <div className="modal-header">
-                  <h2 className="modal-title-big">New Split</h2>
-                  <p className="modal-subtext-big">Enter a name for this group expense</p>
-                </div>
-                <div className="modal-body-big">
-                  <label className="modal-label-fancy-big">EXPENSE DESCRIPTION</label>
-                  <div className="input-field-wrapper-big">
-                    <input 
-                      className="split_userchecking_big" 
-                      type="text" 
-                      placeholder="e.g. Goa Trip, Dinner..." 
-                      autoFocus
-                      value={splitName} 
-                      onChange={(e) => setSplitName(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { confirmNewSplit(); } }}  
-                    />
-                  </div>
-                </div>
-                <div className="modal-footer-big">
-                  <button className="confirm-btn-big" onClick={confirmNewSplit}>START SPLITTING</button>
-                </div>
-            </div>
-          </div>
-        )}
-
-
-
-      
-
-{/* SPLIT RECORDS TABLE */}
-{/* --- UPDATED INTERACTIVE SPLIT RECORDS TABLE --- */}
-<div className="split-records-section">
-    <div className="glass-table-container">
-        <table className="interactive-records-table">
-            <thead>
-                {/* Internal Title Row */}
+          ) : (
+            <table className="split-table-ui">
+              <thead>
                 <tr>
-                    <th colSpan="5" className="table-internal-title">
-                        SPLIT RECORDS HISTORY
-                    </th>
+                  <th>Room Name</th>
+                  <th>Participants</th>
+                  <th>Status</th>
+                  <th>Action</th>
                 </tr>
-                {/* Column Headers */}
-                <tr className="column-headers">
-                    <th>#</th>
-                    <th>DESCRIPTION / NAME</th>
-                    <th>DATE & TIME</th>
-                    <th>TOTAL AMOUNT</th>
-                </tr>
-            </thead>
-            <tbody>
-                {splitRecords.length > 0 ? (
-                    splitRecords.map((split, index) => {
-                        const dateObj = new Date(split.created_at);
-                        return (
-                            <tr key={split.id || index} onClick={() => setSelectedSplit(split)}>
-                                <td className="index-col">{index + 1}</td>
-                                <td className="desc-col">{split.description}</td>
-                                <td className="datetime-col">
-                                    {dateObj.toLocaleDateString()} | {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </td>
-                                <td className="amount-col">₹{split.total_amount}</td>
-                            </tr>
-                        );
-                    })
-                ) : (
-                    <tr>
-                        <td colSpan="4" className="empty-row">No records found. Start splitting!</td>
-                    </tr>
-                )}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-{/* 3. DETAIL VIEW MODAL (Add this next to your other modals) */}
-{selectedSplit && (
-    <div className="modal-overlay">
-        <div className="split_amount_card big-ui interactive-card detail-view-card">
-            <button className="modal-close-x" onClick={() => setSelectedSplit(null)}>&times;</button>
-            <div className="modal-header">
-                <h2 className="modal-title-big" style={{ fontSize: '1.5rem' }}>{selectedSplit.description}</h2>
-                <p className="modal-subtext-big">Total Amount: ₹{selectedSplit.total_amount}</p>
-            </div>
-            <div className="modal-body-big">
-                <table className="detail-table">
-                    <thead>
-                        <tr className="modal-label-fancy-big" style={{ borderBottom: '2px solid #eab308' }}>
-                            <th style={{ textAlign: 'left', padding: '10px' }}>Friend</th>
-                            <th style={{ textAlign: 'left', padding: '10px' }}>Amount</th>
-                            <th style={{ textAlign: 'left', padding: '10px' }}>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {selectedSplit.friends && selectedSplit.friends.map((friend, idx) => (
-                            <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                                <td style={{ padding: '12px', fontWeight: '600' }}>{friend.username}</td>
-                                <td style={{ padding: '12px' }}>₹{friend.amount}</td>
-                                <td style={{ padding: '12px' }}>
-                                    <span className="status-badge-pending">Pending</span>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            <div className="modal-footer-big">
-                <button className="confirm-btn-big" onClick={() => setSelectedSplit(null)}>CLOSE HISTORY</button>
-            </div>
+              </thead>
+              <tbody>
+                {rooms.map(room => (
+                  <tr key={room.id}>
+                    <td className="room-name-bold" onClick={() => setActiveRoom(room)}>
+                      <div className="name-wrapper"><TrendingUp size={14} className="trend-icon"/>{room.roomName}</div>
+                    </td>
+                    <td>
+                      <div className="member-dropdown-container">
+                        <span className="member-trigger">
+                          <Users size={14} style={{marginRight:'8px'}}/>
+                          {room.members.length} Members
+                        </span>
+                        <div className="member-dropdown-content">
+                          {room.members.map((m, idx) => (
+                            <div key={idx} className="dropdown-member-item"><span className="user-dot"></span> @{m}</div>
+                          ))}
+                        </div>
+                      </div>
+                    </td>
+                    <td><span className="active-status-pill">Active</span></td>
+                    <td>
+                      <div className="table-actions">
+                        <button className="table-enter-btn" onClick={() => setActiveRoom(room)}>
+                          ENTER ROOM <ArrowUpRight size={14}/>
+                        </button>
+                        <button className="delete-room-btn" onClick={() => deleteRoom(room.id)}>
+                          <Trash2 size={16}/>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-    </div>
-)}
-
-
       </div>
 
-     
-
+      {showRoomModal && (
+        <div className="split-modal-overlay">
+          <div className="split-modal-box">
+            <div className="modal-top">
+              <h3><UserPlus size={20}/> Initialize Group</h3>
+              <X className="close-btn" onClick={() => setShowRoomModal(false)} />
+            </div>
+            <div className="modal-content">
+              <div className="field-group">
+                <label className="split-label">Group Identity (Name)</label>
+                <input className="split-input-field" value={roomName} onChange={(e)=>setRoomName(e.target.value)} placeholder="e.g. Vacation 2026" />
+              </div>
+              <div className="field-group">
+                <label className="split-label">Add Member Username</label>
+                <div className="flex-row">
+                  <input className="split-input-field" value={newMember} onChange={(e)=>setNewMember(e.target.value)} placeholder="Username" />
+                  <button className="btn-add-square" onClick={() => {
+                    if(newMember.trim()){
+                      setTempMembers([...tempMembers, newMember.trim()]);
+                      setNewMember("");
+                    }
+                  }}><Plus/></button>
+                </div>
+              </div>
+              <div className="split-chip-container">
+                <span className="split-chip owner">@{user.username} (You)</span>
+                {tempMembers.map((m, i) => (
+                  <span key={i} className="split-chip">
+                    @{m} <X size={12} className="remove-chip" onClick={() => setTempMembers(tempMembers.filter((_, idx) => idx !== i))}/>
+                  </span>
+                ))}
+              </div>
+              <button className="btn-finalize-room" onClick={handleCreateRoom} disabled={loading}>
+                {loading ? "Allocating Database Row..." : "LAUNCH GROUP"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 };
+
+export default Split;

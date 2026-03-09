@@ -1,5 +1,6 @@
 import express from "express";
-import { db, schema } from "../db/db.js";
+import { db } from "../db/db.js";
+import { notifications } from "../db/schema/notifications.js";
 import { eq } from "drizzle-orm";
 import { protect } from "../middlewares/auth.middleware.js";
 import { sendEmailNotification } from "../services/email.service.js";

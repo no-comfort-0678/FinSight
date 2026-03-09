@@ -136,7 +136,7 @@ function Login() {
         <div id="info">
           <div className="row">
             <span className="conf">
-              {isEmailLogin ? "username:" : "Username :"}
+              {isEmailLogin ? "Email:" : "Username :"}
             </span>
             <div className="input-group">
               <input

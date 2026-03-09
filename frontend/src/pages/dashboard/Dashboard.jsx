@@ -1,5 +1,5 @@
-
-import './dashboard.css';
+import "./dashboard.css";
+import { motion } from "framer-motion";
 import Stats from "../../components/dashboard/Stats";
 import SpendingTrendChart from "../../components/charts/SpendingTrendChart";
 import CategoryBreakdownChart from "../../components/charts/CategoryBreakDownChart";
@@ -7,47 +7,52 @@ import RecentTransactionsTable from "../../components/dashboard/RecentTransactio
 import { useAuth } from "../../context/AuthContext";
 
 function Dashboard() {
- 
-  const today = new Date();
-  const month = today.getMonth() + 1;
-  const year = today.getFullYear();
-
   const { user, authLoading } = useAuth();
+  const today = new Date();
 
-if (authLoading) {
-  return (
-    <div className="h-full flex items-center justify-center text-gray-400">
-      Restoring session...
-    </div>
-  );
-}
+  if (authLoading) {
+    return <div className="fs-guard fs-guard--loading">Restoring session...</div>;
+  }
+  if (!user) {
+    return <div className="fs-guard fs-guard--error">Session expired. Please login.</div>;
+  }
 
-if (!user) {
-  return (
-    <div className="h-full flex items-center justify-center text-red-500">
-      Session expired. Please login.
-    </div>
-  );
-}
+  const hour  = today.getHours();
+  const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const month = today.getMonth() + 1;
+  const year  = today.getFullYear();
 
   return (
-    <div className="h-full bg-gray-50 overflow-y-auto">
-      <div className="md:px-16 px-2 py-6">
-        {/* Stats cards */}
-        <Stats userId={user.id} />
+    <div className="fs-dash">
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <SpendingTrendChart userId={user.id} month={month} year={year} />
-          <CategoryBreakdownChart month={month} year={year} />
-        </div>
+      {/* Greeting */}
+      <motion.div
+        className="fs-greeting"
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.38 }}
+      >
+        <h1 className="fs-greeting__title">{greet}, {user.name} 👋</h1>
+        <p className="fs-greeting__sub">
+          Here's your financial overview for{" "}
+          {today.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+        </p>
+      </motion.div>
 
-        {/* Recent transactions */}
-        <div className="mt-6">
-          <RecentTransactionsTable />
-        </div>
+      {/* Stats cards*/}
+      <Stats userId={user.id} />
+
+      {/* Charts */}
+      <div className="fs-chart-grid">
+        <SpendingTrendChart userId={user.id} month={month} year={year} />
+        <CategoryBreakdownChart month={month} year={year} />
       </div>
+
+      {/* Recent Transactions */}
+      <RecentTransactionsTable />
+
     </div>
   );
 }
+
 export default Dashboard;
