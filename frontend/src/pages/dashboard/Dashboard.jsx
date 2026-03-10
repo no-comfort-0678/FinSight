@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import "./dashboard.css";
 import { motion } from "framer-motion";
 import Stats from "../../components/dashboard/Stats";
@@ -8,6 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 
 function Dashboard() {
   const { user, authLoading } = useAuth();
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const today = new Date();
 
   if (authLoading) {
@@ -17,10 +19,10 @@ function Dashboard() {
     return <div className="fs-guard fs-guard--error">Session expired. Please login.</div>;
   }
 
-  const hour  = today.getHours();
+  const hour = today.getHours();
   const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const month = today.getMonth() + 1;
-  const year  = today.getFullYear();
+  const year = today.getFullYear();
 
   return (
     <div className="fs-dash">
@@ -40,16 +42,25 @@ function Dashboard() {
       </motion.div>
 
       {/* Stats cards*/}
-      <Stats userId={user.id} />
+      <Stats
+        userId={user.id}
+        onCategoryClick={(cat) => setSelectedCategory(prev => prev === cat ? null : cat)}
+        selectedCategory={selectedCategory}
+      />
 
       {/* Charts */}
       <div className="fs-chart-grid">
         <SpendingTrendChart userId={user.id} month={month} year={year} />
-        <CategoryBreakdownChart month={month} year={year} />
+        <CategoryBreakdownChart
+          month={month}
+          year={year}
+          onCategoryClick={(cat) => setSelectedCategory(prev => prev === cat ? null : cat)}
+          selectedCategory={selectedCategory}
+        />
       </div>
 
       {/* Recent Transactions */}
-      <RecentTransactionsTable />
+      <RecentTransactionsTable filterCategory={selectedCategory} />
 
     </div>
   );

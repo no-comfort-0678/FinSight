@@ -15,6 +15,34 @@
       "when": 1769611080404,
       "tag": "0001_shocking_skin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773089123771,
+      "tag": "0002_wandering_shooting_star",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773090705751,
+      "tag": "0003_ancient_vindicator",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773091004149,
+      "tag": "0004_greedy_solo",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1773091792830,
+      "tag": "0005_goofy_fabian_cortez",
+      "breakpoints": true
     }
   ]
 }

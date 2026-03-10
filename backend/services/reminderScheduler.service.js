@@ -7,26 +7,18 @@ export const startReminderScheduler = () => {
   // Run every minute to check for due reminders
   cron.schedule('* * * * *', async () => {
     console.log('Checking for due reminders...');
-    
+
     try {
       const now = new Date();
-      const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
-      const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
-      
-      // Find reminders that are due and not yet notified
+
+      // Find reminders that are due and not yet completed
       const dueReminders = await db
         .select()
         .from(schema.reminders)
         .where(
           and(
-            eq(schema.reminders.notified, false),
-            or(
-              and(
-                eq(schema.reminders.reminderDate, currentDate),
-                lt(schema.reminders.reminderTime, currentTime)
-              ),
-              lt(schema.reminders.reminderDate, currentDate)
-            )
+            eq(schema.reminders.isCompleted, false),
+            lt(schema.reminders.remindAt, now)
           )
         );
 
@@ -36,7 +28,7 @@ export const startReminderScheduler = () => {
         // Create notification for the reminder
         const [notification] = await db.insert(schema.notifications).values({
           userId: reminder.userId,
-          message: `Reminder: ${reminder.title}${reminder.amount ? ` - Amount: $${reminder.amount}` : ''}`,
+          message: `Reminder: ${reminder.title}`,
           type: 'reminder'
         }).returning();
 
@@ -45,13 +37,12 @@ export const startReminderScheduler = () => {
           await sendEmailNotification(reminder.userId, notification);
         } catch (emailError) {
           console.error('Failed to send email for reminder:', emailError);
-          // Don't fail the reminder processing if email fails
         }
 
-        // Mark reminder as notified
+        // Mark reminder as completed (or notified if we add that column later)
         await db
           .update(schema.reminders)
-          .set({ notified: true })
+          .set({ isCompleted: true })
           .where(eq(schema.reminders.id, reminder.id));
 
         console.log(`Processed reminder ${reminder.id} for user ${reminder.userId}`);

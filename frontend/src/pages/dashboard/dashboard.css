@@ -229,6 +229,12 @@
 .fs-bitem__fill--green  { background: var(--green); }
 .fs-bitem__fill--orange { background: #fb923c;       }
 .fs-bitem__fill--red    { background: var(--red);    }
+.fs-bitem--active {
+  background: rgba(224,198,0,.1);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 0 10px rgba(224,198,0,.2);
+}
 .fs-bitem__pct {
   font-size: .80rem;                    
   color: rgba(255,255,255,.75);         

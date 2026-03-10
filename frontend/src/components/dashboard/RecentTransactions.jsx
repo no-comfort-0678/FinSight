@@ -4,8 +4,8 @@ import { useAuth } from "../../context/AuthContext";
 import { TrendingUp, CreditCard, ChevronRight, TrendingDown } from "lucide-react";
 import { motion } from "framer-motion";
 
-const RecentTransactionsTable = () => {
-  const { user, token } = useAuth(); 
+const RecentTransactionsTable = ({ filterCategory }) => {
+  const { user, token } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,20 +17,16 @@ const RecentTransactionsTable = () => {
     const fetchTransactions = async () => {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/v1/payments/user", {
+        const res = await fetch("http://localhost:5000/api/v1/dashboard/summary", {
           headers: {
-            Authorization: `Bearer ${token}`, 
+            Authorization: `Bearer ${token}`,
           },
         });
 
         if (!res.ok) throw new Error("Failed to fetch transactions");
 
         const data = await res.json();
-        const sorted = [...data].sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
-
-        setTransactions(sorted);
+        setTransactions(data.recentTransactions);
         setLoading(false);
       } catch (err) {
         console.error(err);
@@ -42,7 +38,11 @@ const RecentTransactionsTable = () => {
     fetchTransactions();
   }, [user, token]);
 
-  const recentTransactions = transactions.slice(0, 5);
+  const filtered = filterCategory
+    ? transactions.filter(t => t.category === filterCategory)
+    : transactions;
+
+  const recentTransactions = filtered.slice(0, 10);
 
   return (
     <motion.div
@@ -52,8 +52,10 @@ const RecentTransactionsTable = () => {
       transition={{ delay: 0.5, duration: 0.42 }}
     >
       <div className="fs-tx__header">
-        <h3 className="fs-tx__title">Recent Transactions</h3>
-        <button className="fs-tx__more" onClick={() => navigate("/transactions/payments")}>
+        <h3 className="fs-tx__title">
+          {filterCategory ? `Transactions: ${filterCategory}` : "Recent Transactions"}
+        </h3>
+        <button className="fs-tx__more" onClick={() => navigate("/transactions")}>
           Show More <ChevronRight size={13} />
         </button>
       </div>
@@ -65,7 +67,7 @@ const RecentTransactionsTable = () => {
           <tr>
             <th>Date</th>
             <th>Notes</th>
-            <th>Payment</th>
+            <th>Type</th>
             <th className="r">Amount</th>
           </tr>
         </thead>
@@ -91,18 +93,21 @@ const RecentTransactionsTable = () => {
                 transition={{ delay: 0.54 + i * 0.055 }}
               >
                 <td>
-                  {new Date(tx.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
+                  {new Date(tx.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
                 </td>
-                <td className="white">{tx.description || "—"}</td>
+                <td className="white">{tx.category || tx.vendor || tx.description || "—"}</td>
                 <td>
-                  <span className={`fs-tx-badge ${Number(tx.amount) > 0 ? "fs-tx-badge--income" : "fs-tx-badge--pay"}`}>
-                    {Number(tx.amount) > 0
-                      ? <><TrendingDown size={10} /> Payment</>
-                      : <><CreditCard size={10} /> Received</>}
+                  <span className={`fs-tx-badge ${tx.amount > 0 ? "fs-tx-badge--income" : "fs-tx-badge--pay"}`}>
+                    {tx.amount > 0
+                      ? <><TrendingUp size={10} /> Received</>
+                      : tx.type === "expense"
+                        ? <><CreditCard size={10} /> Expense</>
+                        : <><TrendingDown size={10} /> Payment</>
+                    }
                   </span>
                 </td>
-                <td className={`r ${Number(tx.amount) < 0 ? "fs-tx-neg" : "fs-tx-pos"}`}>
-                  {Number(tx.amount) < 0 ? "−" : "+"}₹{Math.abs(tx.amount).toLocaleString()}
+                <td className={`r ${tx.amount < 0 ? "fs-tx-neg" : "fs-tx-pos"}`}>
+                  {tx.amount < 0 ? "−" : "+"}₹{Math.abs(tx.amount).toLocaleString()}
                 </td>
               </motion.tr>
             ))

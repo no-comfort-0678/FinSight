@@ -3,11 +3,11 @@ import { useAuth } from "../../context/AuthContext";
 import { TrendingDown, HandCoins, Wallet, ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 
-const Stats = () => {
+const Stats = ({ onCategoryClick, selectedCategory }) => {
   const { user, token } = useAuth();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -15,31 +15,16 @@ const Stats = () => {
     const fetchDashboardSummary = async () => {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/v1/payments/user", {
+        const res = await fetch("http://localhost:5000/api/v1/dashboard/summary", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error("Failed to fetch user transactions");
+        if (!res.ok) throw new Error("Failed to fetch dashboard summary");
 
-        const payments = await res.json();
-        const monthlySpending = {
-          total: payments.reduce((sum, p) => sum + Number(p.amount), 0),
-          change: 0, // optional: calculate vs previous month
-        };
-        const categoryBreakdown = {};
-        payments.forEach((p) => {
-          const cat = p.description || "Uncategorized";
-          if (!categoryBreakdown[cat]) categoryBreakdown[cat] = { amount: 0, percent: 0 };
-          categoryBreakdown[cat].amount += Number(p.amount);
-        });
-        const totalAmount = payments.reduce((sum, p) => sum + Number(p.amount), 0) || 1;
-        Object.keys(categoryBreakdown).forEach((c) => {
-          categoryBreakdown[c].percent = (categoryBreakdown[c].amount / totalAmount) * 100;
-        });
+        const data = await res.json();
 
         setSummary({
-          monthlySpending,
-          budgetSummary: { underBudget: 3, nearLimit: 1, overLimit: 0 }, // example
-          categoryBreakdown,
+          stats: data.stats,
+          breakdown: data.breakdown,
         });
         setLoading(false);
       } catch (err) {
@@ -53,8 +38,8 @@ const Stats = () => {
   }, [user, token]);
 
   if (loading) return <p className="fs-stats-msg fs-stats-msg--loading">Loading dashboard summary...</p>;
-  if (error)   return <p className="fs-stats-msg fs-stats-msg--error">Error: {error}</p>;
-  if (!summary)return <p className="fs-stats-msg fs-stats-msg--loading">No dashboard data available.</p>;
+  if (error) return <p className="fs-stats-msg fs-stats-msg--error">Error: {error}</p>;
+  if (!summary) return <p className="fs-stats-msg fs-stats-msg--loading">No dashboard data available.</p>;
 
   return (
     <div className="fs-stats">
@@ -72,7 +57,7 @@ const Stats = () => {
           </div>
           <div className="fs-stat-card__label">Monthly Spending</div>
           <div className="fs-stat-card__value fs-stat-card__value--red">
-            ₹{summary.monthlySpending.total.toLocaleString()}
+            ₹{Number(summary.stats.totalSpent).toLocaleString()}
           </div>
           <span className="fs-badge fs-badge--red">
             <ArrowDownRight size={11} /> This month
@@ -88,10 +73,12 @@ const Stats = () => {
             <HandCoins size={18} />
           </div>
           <div className="fs-stat-card__label">Total Credited</div>
-          <div className="fs-stat-card__value fs-stat-card__value--green">₹—</div>
-          {/* <span className="fs-badge fs-badge--green">
-            <ArrowUpRight size={11} /> Add income source
-          </span> */}
+          <div className="fs-stat-card__value fs-stat-card__value--green">
+            ₹{Number(summary.stats.totalReceived).toLocaleString()}
+          </div>
+          <span className="fs-badge fs-badge--green">
+            Income
+          </span>
         </motion.div>
 
         <motion.div
@@ -103,41 +90,13 @@ const Stats = () => {
             <Wallet size={18} />
           </div>
           <div className="fs-stat-card__label">Net Balance</div>
-          <div className="fs-stat-card__value fs-stat-card__value--gold">₹—</div>
-          {/* <span className="fs-badge fs-badge--yellow">⚡ Track balance</span> */}
+          <div className="fs-stat-card__value fs-stat-card__value--gold">
+            ₹{Number(summary.stats.balance).toLocaleString()}
+          </div>
+          <span className="fs-badge fs-badge--yellow">⚡ Total Funds</span>
         </motion.div>
 
       </div>
-
-      {/* ── Category breakdown ── */}
-      <motion.div
-        className="fs-glass fs-breakdown"
-        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.42 }}
-      >
-        <h4 className="fs-breakdown__title">Category Breakdown</h4>
-        <div className="fs-breakdown__grid">
-          {Object.entries(summary.categoryBreakdown).map(([cat, data]) => {
-            const pct = Math.round(data.percent);
-            const fillClass =
-              pct >= 100 ? "fs-bitem__fill--red"
-            : pct >= 80  ? "fs-bitem__fill--orange"
-            :               "fs-bitem__fill--green";
-            return (
-              <div key={cat}>
-                <p className="fs-bitem__name">{cat}</p>
-                <div className="fs-bitem__track">
-                  <div
-                    className={`fs-bitem__fill ${fillClass}`}
-                    style={{ width: `${Math.min(pct, 100)}%` }}
-                  />
-                </div>
-                <p className="fs-bitem__pct">{pct}%</p>
-              </div>
-            );
-          })}
-        </div>
-      </motion.div>
 
     </div>
   );

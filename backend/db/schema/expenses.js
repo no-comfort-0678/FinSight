@@ -1,8 +1,8 @@
 import {
   pgTable,
   serial,
-  varchar,
   integer,
+  varchar,
   numeric,
   timestamp,
   date,
@@ -26,11 +26,13 @@ export const expenses = pgTable("expenses", {
 
   fileUrl: text("file_url"),
 
-  fileHash: varchar("file_hash", { length: 64 }).notNull().unique(),  
+  fileHash: varchar("file_hash", { length: 64 }).notNull().unique(),
 
   ocrText: text("ocr_text"),
 
   status: varchar("status", { length: 32 }).default("completed"),
+
+  category: varchar("category", { length: 100 }).default("Other"),
 
   createdAt: timestamp("created_at").defaultNow(),
 });

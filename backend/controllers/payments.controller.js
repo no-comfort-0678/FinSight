@@ -1,4 +1,4 @@
-import { sendPaymentService ,getUserPaymentsService} from "../services/payments.services.js";
+import { sendPaymentService, getUserPaymentsService } from "../services/payments.services.js";
 export const sendPayment = async (req, res) => {
   try {
     const {
@@ -6,6 +6,7 @@ export const sendPayment = async (req, res) => {
       receiverAccountId,
       amount,
       description,
+      category,
     } = req.body;
 
     if (!senderAccountId || !receiverAccountId || !amount) {
@@ -17,6 +18,7 @@ export const sendPayment = async (req, res) => {
       receiverAccountId: Number(receiverAccountId),
       amount: Number(amount),
       description,
+      category,
       idempotencyKey: req.headers["idempotency-key"],
     });
 
@@ -38,7 +40,7 @@ export const sendPayment = async (req, res) => {
 
 export const getUserPayments = async (req, res) => {
   try {
-    const userId = req.user.id; 
+    const userId = req.user.id;
     const payments = await getUserPaymentsService(userId);
     res.json(payments);
   } catch (err) {

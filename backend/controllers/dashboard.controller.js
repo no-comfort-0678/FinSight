@@ -25,26 +25,72 @@ export const getDashboardSummary = async (req, res) => {
             .select()
             .from(expenses)
             .where(eq(expenses.accountId, account.id));
+        const getCleanCategory = (t) => {
+            if (t.type === "expense") return "Scanned Receipts";
+
+            const isGeneric = (c) => {
+                if (!c) return true;
+                const normalized = String(c).toLowerCase().trim();
+                return [
+                    "other",
+                    "sent payment",
+                    "sent payments",
+                    "received payment",
+                    "received payments",
+                    "transfers",
+                    "transfer",
+                    "payment",
+                    "payments",
+                    "unknown",
+                    "unknown vendor",
+                    "general",
+                    "miscellaneous"
+                ].includes(normalized);
+            };
+
+            let cat = "Other";
+            if (!isGeneric(t.category)) cat = t.category.trim();
+            else if (!isGeneric(t.description)) cat = t.description.trim();
+            else if (!isGeneric(t.vendor)) cat = t.vendor.trim();
+
+            return cat;
+        };
+
         const consolidatedTransactions = [
-            ...userPayments.map(p => ({
-                id: `pay-${p.id}`,
-                type: "payment",
-                amount: p.senderAccountId === account.id ? -Number(p.amount) : Number(p.amount),
-                vendor: p.senderAccountId === account.id ? "Sent Payment" : "Received Payment",
-                description: p.description,
-                date: p.createdAt,
-                status: p.status
-            })),
-            ...userExpenses.map(e => ({
-                id: `exp-${e.id}`,
-                type: "expense",
-                amount: -Number(e.amount),
-                vendor: e.vendor,
-                description: "Scanned Receipt",
-                date: e.billDate || e.createdAt,
-                status: e.status
-            }))
+            ...userPayments.map(p => {
+                const base = {
+                    type: "payment",
+                    amount: p.senderAccountId === account.id ? -Number(p.amount) : Number(p.amount),
+                    vendor: p.senderAccountId === account.id ? "Sent Payment" : "Received Payment",
+                    description: p.description,
+                    category: p.category || p.description || "Other",
+                };
+                return {
+                    id: `pay-${p.id}`,
+                    ...base,
+                    category: getCleanCategory(base),
+                    date: p.createdAt,
+                    status: p.status
+                };
+            }),
+            ...userExpenses.map(e => {
+                const base = {
+                    type: "expense",
+                    amount: -Number(e.amount),
+                    vendor: e.vendor || "Scanned Receipt",
+                    description: "Scanned Receipt",
+                    category: e.category || "Other",
+                };
+                return {
+                    id: `exp-${e.id}`,
+                    ...base,
+                    category: getCleanCategory(base),
+                    date: e.billDate || e.createdAt,
+                    status: e.status
+                };
+            })
         ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
@@ -53,38 +99,35 @@ export const getDashboardSummary = async (req, res) => {
             return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
         });
 
-        const totalSpent = monthlyTransactions
+        // Monthly stats for the stat cards
+        const monthlySpent = monthlyTransactions
             .filter(t => t.amount < 0)
             .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
         const totalReceived = monthlyTransactions
             .filter(t => t.amount > 0)
             .reduce((sum, t) => sum + t.amount, 0);
-        // const breakdown = {};
-        // consolidatedTransactions.forEach(t => {
-        //     const key = t.type === "expense" ? "Scanned Receipts" : (t.vendor || "Transfers");
-        //     if (!breakdown[key]) breakdown[key] = 0;
-        //     if (t.amount < 0) breakdown[key] += Math.abs(t.amount);
-        // });
-        
+
+        // Breakdown uses ALL transactions so every category shows up
         const breakdown = {};
         consolidatedTransactions.forEach(t => {
-            const key = t.type === "expense"
-                ? "Scanned Receipts"
-                : (t.vendor || "Transfers"); // "Sent Payment" or "Received Payment"
-
-            if (!breakdown[key]) breakdown[key] = 0;
-
-            // Use Math.abs so both sent AND received contribute their actual amount
-            breakdown[key] += Math.abs(t.amount);
+            if (t.amount < 0) {
+                const category = t.category;
+                if (!breakdown[category]) breakdown[category] = 0;
+                breakdown[category] += Math.abs(t.amount);
+            }
         });
 
+        const allTimeSpent = Object.values(breakdown).reduce((a, b) => a + b, 0);
+
+        res.set('Cache-Control', 'no-store');
         res.json({
             stats: {
-                totalSpent: totalSpent.toFixed(2),
+                totalSpent: monthlySpent.toFixed(2),
                 totalReceived: totalReceived.toFixed(2),
                 balance: Number(account.balance).toFixed(2),
-                transactionCount: consolidatedTransactions.length
+                transactionCount: monthlyTransactions.length,
+                allTimeSpent: allTimeSpent.toFixed(2)
             },
             recentTransactions: consolidatedTransactions.slice(0, 10),
             breakdown
@@ -180,27 +223,62 @@ export const getAllTransactions = async (req, res) => {
             .select()
             .from(expenses)
             .where(eq(expenses.accountId, account.id));
+
+        const isGeneric = (c) => {
+            if (!c) return true;
+            const n = String(c).toLowerCase().trim();
+            return ["other", "sent payment", "sent payments",
+                "received payment", "received payments", "transfers", "transfer", "payment",
+                "payments", "unknown", "unknown vendor", "general", "miscellaneous"
+            ].includes(n);
+        };
+
+        const cleanCat = (t) => {
+            if (t.type === "expense") return "Scanned Receipts";
+
+            let cat = "Other";
+            if (!isGeneric(t.category)) cat = t.category.trim();
+            else if (!isGeneric(t.description)) cat = t.description.trim();
+            else if (!isGeneric(t.vendor)) cat = t.vendor.trim();
+            return cat;
+        };
+
         const consolidated = [
-            ...userPayments.map(p => ({
-                id: `pay-${p.id}`,
-                type: "payment",
-                amount: p.senderAccountId === account.id ? -Number(p.amount) : Number(p.amount),
-                vendor: p.senderAccountId === account.id ? "Sent Payment" : "Received Payment",
-                description: p.description,
-                date: p.createdAt,
-                status: p.status
-            })),
-            ...userExpenses.map(e => ({
-                id: `exp-${e.id}`,
-                type: "expense",
-                amount: -Number(e.amount),
-                vendor: e.vendor || "Unknown Vendor",
-                description: "Scanned Receipt",
-                date: e.billDate || e.createdAt,
-                status: e.status
-            }))
+            ...userPayments.map(p => {
+                const base = {
+                    type: "payment",
+                    amount: p.senderAccountId === account.id ? -Number(p.amount) : Number(p.amount),
+                    vendor: p.senderAccountId === account.id ? "Sent Payment" : "Received Payment",
+                    description: p.description,
+                    category: p.category || p.description || "Other",
+                };
+                return {
+                    id: `pay-${p.id}`,
+                    ...base,
+                    category: cleanCat(base),
+                    date: p.createdAt,
+                    status: p.status
+                };
+            }),
+            ...userExpenses.map(e => {
+                const base = {
+                    type: "expense",
+                    amount: -Number(e.amount),
+                    vendor: e.vendor || "Scanned Receipt",
+                    description: "Scanned Receipt",
+                    category: e.category || "Other",
+                };
+                return {
+                    id: `exp-${e.id}`,
+                    ...base,
+                    category: cleanCat(base),
+                    date: e.billDate || e.createdAt,
+                    status: e.status
+                };
+            })
         ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
+        res.set('Cache-Control', 'no-store');
         res.json(consolidated);
     } catch (err) {
         console.error("All Transactions Error:", err);

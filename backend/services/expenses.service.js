@@ -23,16 +23,7 @@ export const getUserExpensesService = async (userId) => {
 };
 
 
-export const createExpenseFromReceiptService = async ({
-  userId,
-  amount,
-  vendor,
-  billDate,
-  fileUrl,
-  fileHash,
-  ocrText,
-}) => {
-
+export const createExpenseService = async (userId, { ocrText, fileUrl, amount, vendor, category, billDate }) => {
   const [account] = await db
     .select({ id: accounts.id })
     .from(accounts)
@@ -42,6 +33,47 @@ export const createExpenseFromReceiptService = async ({
     throw new Error("Account not found");
   }
 
+  const transactionId = crypto.randomUUID();
+  const fileHash = crypto.createHash("sha256").update(ocrText || fileUrl || transactionId).digest("hex");
+
+  const [expense] = await db
+    .insert(expenses)
+    .values({
+      transactionId,
+      accountId: account.id,
+      amount: amount || 0,
+      vendor: vendor || "Manual Expense",
+      billDate: billDate || new Date(),
+      fileUrl,
+      fileHash,
+      ocrText,
+      category: category || "Other",
+      status: "completed",
+    })
+    .returning();
+
+  return expense;
+};
+
+
+export const createExpenseFromReceiptService = async ({
+  userId,
+  amount,
+  vendor,
+  billDate,
+  fileUrl,
+  fileHash,
+  ocrText,
+  category,
+}) => {
+  const [account] = await db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(eq(accounts.userId, userId));
+
+  if (!account) {
+    throw new Error("Account not found");
+  }
 
   const existing = await db
     .select()
@@ -52,21 +84,20 @@ export const createExpenseFromReceiptService = async ({
     throw new Error("Duplicate receipt detected");
   }
 
-
-  const transactionId = crypto.randomUUID();
-
-
+  // Use the generic createExpenseService, overriding the fileHash generation
+  // and providing specific receipt details.
   const [expense] = await db
     .insert(expenses)
     .values({
-      transactionId,
-      accountId: account.id,
+      transactionId: crypto.randomUUID(), // Generate here as createExpenseService generates its own
+      accountId: account.id, // Pass accountId directly
       amount,
       vendor,
       billDate,
       fileUrl,
-      fileHash,
+      fileHash, // Use the provided fileHash
       ocrText,
+      category: category || "Shopping", // Default for now, could be passed from OCR
       status: "completed",
     })
     .returning();

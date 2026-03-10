@@ -1,4 +1,5 @@
 import "dotenv/config";
+// Last updated: 2026-03-10T04:22:00Z
 import express from "express";
 import cors from "cors";
 import paymentsRoutes from "./routes/payments.routes.js";
@@ -9,6 +10,7 @@ import notificationsRoutes from "./routes/notifications.routes.js";
 import splitroutes from "./routes/split.routes.js";
 import receipts from "./routes/receipts.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import { startReminderScheduler } from "./services/reminderScheduler.service.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 

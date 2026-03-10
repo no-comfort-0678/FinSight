@@ -1,8 +1,8 @@
 import {
   pgTable,
   serial,
-  varchar,
   integer,
+  varchar,
   numeric,
   timestamp,
 } from "drizzle-orm/pg-core";
@@ -30,6 +30,8 @@ export const payments = pgTable("payments", {
   status: paymentStatusEnum("status").default("pending"),
 
   description: varchar("description", { length: 255 }),
+
+  category: varchar("category", { length: 100 }),
 
   createdAt: timestamp("created_at").defaultNow(),
 });

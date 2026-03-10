@@ -3,7 +3,7 @@ import {
     getRemindersService,
     updateReminderService,
     deleteReminderService,
-    markNotifiedService,
+    markCompletedService,
 } from "../services/reminders.service.js";
 
 // GET /api/v1/reminders — Fetch all reminders for the logged-in user
@@ -34,7 +34,7 @@ export const createReminder = async (req, res) => {
 export const updateReminder = async (req, res) => {
     try {
         const userId = req.user.id;
-        const id = Number(req.params.id);
+        const id = req.params.id; // UUID
         const updated = await updateReminderService(id, userId, req.body);
         if (!updated) return res.status(404).json({ message: "Reminder not found" });
         res.json(updated);
@@ -48,7 +48,7 @@ export const updateReminder = async (req, res) => {
 export const deleteReminder = async (req, res) => {
     try {
         const userId = req.user.id;
-        const id = Number(req.params.id);
+        const id = req.params.id; // UUID
         const deleted = await deleteReminderService(id, userId);
         if (!deleted) return res.status(404).json({ message: "Reminder not found" });
         res.json({ message: "Reminder deleted", id: deleted.id });
@@ -61,8 +61,8 @@ export const deleteReminder = async (req, res) => {
 // PATCH /api/v1/reminders/:id/notify — Mark reminder as notified
 export const markNotified = async (req, res) => {
     try {
-        const id = Number(req.params.id);
-        const updated = await markNotifiedService(id);
+        const id = req.params.id; // UUID
+        const updated = await markCompletedService(id);
         res.json(updated);
     } catch (err) {
         console.error("MARK NOTIFIED ERROR:", err);
