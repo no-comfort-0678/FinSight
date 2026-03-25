@@ -11,6 +11,7 @@ import splitroutes from "./routes/split.routes.js";
 import receipts from "./routes/receipts.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import { startReminderScheduler } from "./services/reminderScheduler.service.js";
+import chatRoutes from "./routes/chat.routes.js"
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -24,6 +25,7 @@ app.use("/api/notifications", notificationsRoutes);
 app.use("/split", splitroutes);
 app.use("/api/receipts", receipts);
 app.use("/api/v1/dashboard", dashboardRoutes);
+app.use("/api/chat", chatRoutes);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   startReminderScheduler();
