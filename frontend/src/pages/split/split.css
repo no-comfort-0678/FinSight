@@ -1,11 +1,17 @@
 /** * Comments: Unified CSS for Finsight Split.
- * Modal: Instant High-Velocity Left-to-Center Snap (Fling Style).
- * Highlighting: Added quick yellow pulse 'tweak' for member names when added.
- * UI Fix: RESTRICTED spacing to Main Table only. No Modal UI touched.
- * Scroll Fix [2026-03-09]: Added internal scrolling to Lobby, History, and Modal.
- * Layout Fix: Moved Member dropdown to the SIDE (Right) with internal scrolling to prevent cutoff.
+ * FIX: Overwriting 'overflow: hidden' from index.css to allow page scroll.
+ * Navbar Fix: Padding increased to 18vh to clear the absolute nav + margin.
+ * Size Fix: Compacted main containers (900px) and reduced font sizes for 100% zoom.
+ * Modal Fix: Centered, reduced size to 440px, and added 15vh top buffer to prevent Nav collision.
+ * Updated: Fixed table action spacing and member dropdown overlap.
  * Rule: Providing the whole code after changes.
  */
+
+/* 1. FORCE PAGE SCROLL (Fixes collision/cutting off) */
+:global(html), :global(body) {
+    height: auto !important;
+    overflow: auto !important;
+}
 
 /* Custom Scrollbar for the whole app */
 ::-webkit-scrollbar { width: 6px; }
@@ -15,7 +21,8 @@
 .split-page-main {
     width: 100%;
     min-height: 100vh;
-    padding-top: 15vh;
+    padding-top: 18vh; 
+    padding-bottom: 60px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -26,45 +33,58 @@
 }
 
 .split-card-container, .split-manager-container {
-    width: 95%;
-    max-width: 1200px;
-    background: rgba(18, 18, 18, 0.8);
+    width: 92%;
+    max-width: 900px; 
+    background: rgba(18, 18, 18, 0.85);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 30px;
-    padding: 40px;
+    border-radius: 20px; 
+    padding: 20px; 
     box-shadow: 0 20px 50px rgba(0,0,0,0.6);
 }
 
 .brand-stack .yellow-title {
     color: rgb(224, 198, 0);
-    font-size: 3vh;
-    letter-spacing: 3px;
+    font-size: 1.5rem; 
+    letter-spacing: 2px;
     margin: 0;
     font-weight: 800;
 }
 
-.subtitle-text { color: #888; font-size: 0.9rem; margin-top: 5px; }
+.subtitle-text { color: #888; font-size: 0.75rem; margin-top: 5px; } 
 
 .split-top-bar {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 40px;
+    margin-bottom: 20px; 
+}
+
+/* HEADER UTILITY - PREVENT SHRINKING */
+.header-utility {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.header-utility button {
+    flex-shrink: 0; 
+    white-space: nowrap;
 }
 
 /* MEMBER DROPDOWN STYLING - FIXED TO SIDE */
 .member-dropdown-container {
     position: relative;
     display: inline-block;
+    z-index: 50; /* Higher than table cell defaults */
 }
 
 .member-trigger {
     background: rgba(224, 198, 0, 0.1);
     color: rgb(224, 198, 0);
-    padding: 6px 15px;
+    padding: 5px 12px; 
     border-radius: 30px;
-    font-size: 0.8rem;
+    font-size: 0.7rem; 
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -74,22 +94,22 @@
 
 .member-dropdown-content {
     position: absolute;
-    left: 110%; /* MOVED TO THE RIGHT SIDE */
+    left: 110%; 
     top: 50%;
     transform: translateY(-50%) translateX(-10px);
     background: rgb(32, 34, 30);
     backdrop-filter: blur(15px);
     border: 1px solid rgba(224, 198, 0, 0.3);
     border-radius: 12px;
-    padding: 12px;
-    min-width: 160px;
-    max-height: 200px; /* HEIGHT LIMIT */
-    overflow-y: auto;   /* ENABLE INTERNAL SCROLL */
-    z-index: 10000;
+    padding: 10px;
+    min-width: 150px;
+    max-height: 200px; 
+    overflow-y: auto;  
+    z-index: 99999 !important; /* Forces it over everything including sticky headers */
     opacity: 0;
     visibility: hidden;
     transition: all 0.2s ease;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
 
 .member-dropdown-container:hover .member-dropdown-content {
@@ -98,72 +118,124 @@
     transform: translateY(-50%) translateX(0);
 }
 
-.dropdown-header { font-size: 0.65rem; color: #666; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 8px; }
-.dropdown-member-item { color: white; padding: 5px 0; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
-.user-dot { width: 6px; height: 6px; background: rgb(224, 198, 0); border-radius: 50%; }
+.dropdown-header { font-size: 0.6rem; color: #666; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 8px; }
+.dropdown-member-item { color: white; padding: 4px 0; font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
+.user-dot { width: 5px; height: 5px; background: rgb(224, 198, 0); border-radius: 50%; }
 
-/* --- FEATURE 1: MAIN LOBBY TABLE SCROLLING --- */
+/* --- MAIN LOBBY TABLE SCROLLING --- */
 .room-display-area { 
     width: 100%; 
     background: rgba(0,0,0,0.2); 
-    border-radius: 20px; 
-    overflow-y: auto !important; 
-    max-height: 500px;           
-    display: block;              
+    border-radius: 15px; 
+    overflow: visible !important; /* Allow dropdowns to overflow container */
+    display: block;                  
 }
 
-.split-table-ui { width: 100%; border-collapse: collapse; }
+.split-table-ui { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .split-table-ui th { 
-    padding: 20px; 
+    padding: 12px 15px; 
     text-align: left; 
     color: rgb(224, 198, 0); 
-    font-size: 0.75rem; 
+    font-size: 0.65rem; 
     text-transform: uppercase;
     position: sticky; 
     top: 0;
     background: #1a1c18;
     z-index: 10;
 }
-.split-table-ui td { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.split-table-ui td { 
+    padding: 12px 15px; 
+    font-size: 0.8rem; 
+    border-bottom: 1px solid rgba(255,255,255,0.03); 
+    vertical-align: middle;
+}
 
+/* FIX: Set clear column proportions */
+.split-table-ui th:nth-child(1), .split-table-ui td:nth-child(1) { width: 35%; }
+.split-table-ui th:nth-child(2), .split-table-ui td:nth-child(2) { width: 25%; }
 .split-table-ui th:last-child, .split-table-ui td:last-child {
     text-align: right;
-    width: 320px; 
+    width: 40%; 
 }
 
 .table-actions {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 12px;
+    gap: 12px; /* Uniform gap for all buttons */
+}
+
+/* FIX: Proper Add button styling */
+.invite-friends-btn {
+    background: transparent;
+    border: 1px solid rgba(224, 198, 0, 0.5);
+    color: rgb(224, 198, 0);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: 0.2s;
+}
+
+.invite-friends-btn:hover {
+    background: rgba(224, 198, 0, 0.1);
+    border-color: rgb(224, 198, 0);
 }
 
 .room-name-bold { font-weight: 700; color: rgb(224, 198, 0); cursor: pointer; }
-.active-status-pill { background: rgba(0, 255, 0, 0.1); color: #00ff00; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; }
+.active-status-pill { background: rgba(0, 255, 0, 0.1); color: #00ff00; padding: 3px 8px; border-radius: 20px; font-size: 0.6rem; }
 
-.table-enter-btn { background: rgb(224, 198, 0); color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+.table-enter-btn { background: rgb(224, 198, 0); color: black; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; }
 .table-enter-btn:hover { background: white; }
-.delete-room-btn { background: none; border: none; color: #ff4444; margin-left: 5px; cursor: pointer; opacity: 0.6; }
-.delete-room-btn:hover { opacity: 1; }
+
+.exit-room-btn, .delete-room-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.exit-room-btn:hover { background: rgba(255, 152, 0, 0.1); border-color: #ff9800; }
+.delete-room-btn { color: #ff4444; }
+.delete-room-btn:hover { background: rgba(255, 68, 68, 0.1); border-color: #ff4444; }
 
 /* GRID & MANAGER */
-.split-main-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 40px; margin-top: 30px; }
-.expense-form-card, .history-list-card { background: rgba(255, 255, 255, 0.02); padding: 30px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.05); }
+.split-main-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1.3fr; 
+    gap: 20px; 
+    margin-top: 20px; 
+}
+.expense-form-card, .history-list-card { 
+    background: rgba(255, 255, 255, 0.02); 
+    padding: 18px; 
+    border-radius: 15px; 
+    border: 1px solid rgba(255,255,255,0.05); 
+}
 
-/* --- FEATURE 2: SPLIT HISTORY TABLE SCROLLING --- */
+/* --- SPLIT HISTORY TABLE SCROLLING --- */
 .history-table-wrapper {
-    max-height: 450px !important; 
+    max-height: 350px !important; 
     overflow-y: auto !important;  
     display: block !important;
     padding-right: 5px;
 }
 
-.input-group-v3 { margin-bottom: 20px; }
-.input-group-v3 label { font-size: 0.7rem; color: #666; font-weight: bold; margin-bottom: 8px; display: block; }
-.split-input-v3 { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 15px; border-radius: 12px; outline: none; }
+.input-group-v3 { margin-bottom: 12px; }
+.input-group-v3 label { font-size: 0.65rem; color: #666; font-weight: bold; margin-bottom: 6px; display: block; }
+.split-input-v3 { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 10px; border-radius: 10px; outline: none; font-size: 0.8rem; }
 
-.type-toggle-v3 { display: flex; background: black; padding: 5px; border-radius: 12px; }
-.type-toggle-v3 button { flex: 1; background: none; border: none; color: #555; padding: 10px; cursor: pointer; font-weight: bold; }
+.type-toggle-v3 { display: flex; background: black; padding: 4px; border-radius: 12px; }
+.type-toggle-v3 button { flex: 1; background: none; border: none; color: #555; padding: 8px; cursor: pointer; font-weight: bold; font-size: 0.7rem; }
 .type-toggle-v3 .active { background: rgb(224, 198, 0); color: black; border-radius: 8px; }
 
 /* HISTORY TABLE */
@@ -171,17 +243,17 @@
 .history-table-v3 th { 
     text-align: left; 
     color: #444; 
-    font-size: 0.7rem; 
-    padding: 12px;
+    font-size: 0.65rem; 
+    padding: 10px;
     position: sticky; 
     top: 0;
     background: #1a1c18;
     z-index: 5;
 }
-.history-table-v3 td { padding: 15px 12px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+.history-table-v3 td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.75rem; }
 .yellow-bold { color: rgb(224, 198, 0); font-weight: 800; }
 
-/* --- HIGH-VELOCITY INSTANT FLING MODAL --- */
+/* --- MODAL FIX: CENTERING & NAV COLLISION --- */
 .split-modal-overlay { 
     position: fixed; 
     inset: 0; 
@@ -189,18 +261,19 @@
     backdrop-filter: blur(10px); 
     display: flex; 
     justify-content: center; 
-    align-items: center; 
+    align-items: flex-start; 
     z-index: 5000; 
+    padding-top: 15vh; 
 }
 
 .split-modal-box { 
     position: relative; 
     background: #1a1c18; 
     border: 2px solid rgb(224, 198, 0); 
-    padding: 40px; 
-    border-radius: 25px; 
-    width: 450px;
-    max-height: 90vh; 
+    padding: 18px; 
+    border-radius: 20px; 
+    width: 440px; 
+    max-height: 75vh; 
     display: flex;
     flex-direction: column;
     box-shadow: 0 40px 100px rgba(0,0,0,0.8);
@@ -208,19 +281,41 @@
     animation: splitwiseFlingCenter 0.25s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 
-/* --- FEATURE 3: MODAL MEMBER LIST SCROLLING --- */
+.summary-list-v3 {
+    max-height: 300px; 
+    overflow-y: auto !important; 
+    overflow-x: hidden !important; 
+    margin-top: 10px;
+    margin-bottom: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.summary-list-v3 table { 
+    width: 100%; 
+    table-layout: fixed; 
+}
+
+.summary-list-v3 td { 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+    padding: 10px 8px;
+    word-wrap: break-word; 
+    font-size: 0.75rem; 
+}
+
+/* --- MODAL MEMBER LIST SCROLLING --- */
 .member-detail-list {
-    max-height: 350px !important; 
+    max-height: 250px !important; 
     overflow-y: auto !important;  
     overflow-x: hidden;
     padding-right: 10px;
-    margin: 15px 0;
+    margin: 10px 0;
 }
 
 .modal-close-icon {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 15px;
+    right: 15px;
     cursor: pointer;
 }
 
@@ -229,23 +324,23 @@
     100% { transform: translate3d(0, 0, 0); opacity: 1; }
 }
 
-.split-input-field { width: 100%; padding: 15px; background: #000; border: 1px solid #333; color: white; border-radius: 12px; margin: 10px 0; }
+.split-input-field { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; margin: 8px 0; font-size: 0.8rem; }
 
 /* REFINED CHIPS WITH TWEAK HIGHLIGHT */
-.split-chip-container { display: flex; flex-wrap: wrap; gap: 8px; }
+.split-chip-container { display: flex; flex-wrap: wrap; gap: 6px; }
 .split-chip { 
     background: rgba(255, 255, 255, 0.05); 
     border: 1px solid rgba(224, 198, 0, 0.3); 
-    padding: 8px 14px; 
+    padding: 6px 12px; 
     border-radius: 10px; 
-    font-size: 0.85rem; 
+    font-size: 0.75rem; 
     font-weight: 600; 
     color: #fff; 
     display: grid; 
     grid-template-columns: 1fr auto auto;
     align-items: center; 
-    gap: 12px;
-    margin-bottom: 8px;
+    gap: 10px;
+    margin-bottom: 5px;
     animation: nameHighlight 0.4s ease-out;
 }
 
@@ -262,39 +357,44 @@
     background: #e0c600;
     color: #000;
     border: none;
-    padding: 12px 20px;
+    padding: 10px 18px;
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
     transition: 0.2s;
     width: 100%;
+    font-size: 0.8rem;
 }
 
-.btn-yellow-solid:hover {
-    filter: brightness(1.2);
-    transform: translateY(-1px);
-}
+.btn-yellow-solid:hover { filter: brightness(1.2); transform: translateY(-1px); }
 
 .btn-yellow-outline {
     background: transparent;
     border: 1px solid #e0c600;
     color: #e0c600;
-    padding: 10px 18px;
+    padding: 8px 14px;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 0.75rem;
+    transition: 0.2s;
+}
+
+.btn-yellow-outline:hover {
+    background: rgba(224, 198, 0, 0.1);
+    box-shadow: 0 0 10px rgba(224, 198, 0, 0.2);
 }
 
 .btn-yellow-mini {
     background: #e0c600;
     color: #000;
     border: none;
-    padding: 4px 10px;
+    padding: 3px 8px;
     border-radius: 4px;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 800;
     cursor: pointer;
     display: flex;
@@ -306,7 +406,7 @@
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #888;
-    padding: 10px;
+    padding: 8px;
     border-radius: 8px;
     cursor: pointer;
     display: flex;
@@ -321,39 +421,39 @@
 }
 
 /* Spacing Helpers */
-.spacing-v { margin-top: 15px; margin-bottom: 15px; }
+.spacing-v { margin-top: 10px; margin-bottom: 10px; }
 
 .card-header-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
-.yellow-text { color: #e0c600; font-weight: 700; }
+.yellow-text { color: #e0c600; font-weight: 700; font-size: 0.9rem; }
 .cursor-p { cursor: pointer; }
 
-/* SPACING ADJUSTMENT: Grid layout for record columns (RESTORED ORIGINAL) */
+/* Grid layout for record columns */
 .detail-row-static {
     display: grid;
     grid-template-columns: 1.5fr 1fr 0.8fr;
-    gap: 15px;
+    gap: 10px;
     align-items: center;
-    padding: 12px 0;
+    padding: 8px 0;
     border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.75rem;
 }
 
-/* --- EYE-CATCHING UNIVERSAL INPUT --- */
 .dynamic-share-input {
     width: 100%; 
-    max-width: 90px;
+    max-width: 70px;
     background: #000;
     border: 1px solid #333;
     color: #e0c600;
     text-align: right;
     border-radius: 6px;
-    font-size: 0.85rem;
-    padding: 6px 10px;
+    font-size: 0.75rem;
+    padding: 5px 8px;
     font-family: 'Courier New', monospace;
     font-weight: bold;
     outline: none;
@@ -368,15 +468,11 @@
     transform: scale(1.05);
 }
 
-.edit-input-wrapper-v4 {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-}
+.edit-input-wrapper-v4 { display: flex; align-items: center; justify-content: flex-end; }
 
 .status-pill {
-    font-size: 0.6rem;
-    padding: 3px 8px;
+    font-size: 0.55rem;
+    padding: 2px 6px;
     border-radius: 4px;
     text-transform: uppercase;
     font-weight: 800;
@@ -402,32 +498,20 @@
     40%, 60% { transform: translate3d(3px, 0, 0); }
 }
 
-/* --- Summary Modal Specifics (RESTORED ORIGINAL) --- */
-.summary-list-v3 {
-    max-height: 400px;
-    overflow-y: auto;
-    margin-bottom: 20px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
-}
-
-.summary-list-v3 table { width: 100%; }
-.summary-list-v3 td { border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 15px 12px; }
-
 .btn-create-new {
     background: #e0c600;
     color: #000;
     border: none;
-    padding: 10px 18px;
+    padding: 8px 14px;
     border-radius: 8px;
     font-weight: 700;
     display: flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
+    font-size: 0.75rem;
 }
 
-/* New Logic Tags */
 .locked-tag {
     background: rgba(224, 198, 0, 0.1);
     border: 1px solid #e0c600;
@@ -444,3 +528,75 @@
     border-radius: 3px;
     margin-left: 5px;
 }
+
+/* --- REVERT MODAL V4 SPECIFIC STYLES (NEW) --- */
+.revert-modal-v4 {
+    background: #1a1c18;
+    border: 2px solid #e0c600;
+    padding: 30px;
+    border-radius: 24px;
+    width: 420px;
+    text-align: center;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+    will-change: transform, opacity;
+    animation: splitwiseFlingCenter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.revert-icon-circle {
+    width: 64px;
+    height: 64px;
+    background: #e0c600;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px auto;
+}
+
+.revert-title {
+    color: #e0c600;
+    font-size: 1.3rem;
+    font-weight: 900;
+    margin: 0 0 10px 0;
+    letter-spacing: 1px;
+}
+
+.revert-desc {
+    color: #bbb;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.revert-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btn-revert-confirm {
+    background: #e0c600;
+    color: #000;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    transition: 0.2s;
+}
+
+.btn-revert-cancel {
+    background: transparent;
+    color: #777;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+

@@ -11,8 +11,10 @@ import {
     joinSplit, updateMemberAmount, toggleMemberStatus,
     settleDebt, getGlobalSummary, revertSplitToInitial,
     bulkUpdateManualAmounts,
-    inviteBatch 
+    inviteBatch , handleExportPDF,handleUserExit
 } from "../controllers/split.controller.js"; 
+// ... existing imports
+
 
 // Import the security middleware
 import { protect } from "../middlewares/auth.middleware.js"; 
@@ -43,5 +45,7 @@ router.post("/settle-debt", protect, settleDebt);
 // --- Invitation System ---
 // This endpoint processes the batch invitations sent when adding users in the Split Lobby
 router.post("/invite-batch", protect, inviteBatch);
+router.get('/export-pdf/:roomId', protect,handleExportPDF);
+router.post('/exit-room/:id', protect, handleUserExit);
 
 export default router;

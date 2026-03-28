@@ -2,12 +2,13 @@
  * Comments: Full RoomSplitManager. No simplifications.
  * Refined: Added Room Creator display in header.
  * Added: Manage Participants Modal (Replacing inline dropdown).
+ * Added: Download Button beside View Summary in Header.
  * Rules: Providing the whole code after changes [2026-03-09].
  */
 import React, { useState, useEffect, useMemo } from "react";
 import { 
   History, RefreshCw, ChevronLeft, DollarSign, 
-  CheckCircle2, X, Users, PieChart, Banknote, AlertTriangle, RotateCcw, Save, Trash2, PlusCircle
+  CheckCircle2, X, Users, PieChart, Banknote, AlertTriangle, RotateCcw, Save, Trash2, PlusCircle, Download
 } from "lucide-react";
 
 const API = "http://localhost:5000/split";
@@ -33,6 +34,54 @@ const RoomSplitManager = ({ activeRoom, user, onBack }) => {
   const [errorId, setErrorId] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+
+/**
+ * Comments: Fixed handleDownload with explicit Type Casting.
+ * FIX: Using Number() to ensure roomId is an integer before API call.
+ * FIX: Added detailed error logging for debugging.
+ */
+const handleDownload = async () => {
+    try {
+        const token = localStorage.getItem("token");
+        // Use Number() to ensure "68" (string) becomes 68 (int)
+        const roomId = activeRoom?.id ? Number(activeRoom.id) : null; 
+
+        if (!roomId || isNaN(roomId)) {
+            console.error("Invalid Room ID detected:", activeRoom?.id);
+            return alert("Error: Room ID is invalid or missing.");
+        }
+
+        console.log(`Attempting PDF download for Room ID: ${roomId}`);
+
+        const response = await fetch(`${API}/export-pdf/${roomId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Server Error: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${activeRoom.roomName || 'Finsight'}_Report.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+    } catch (error) {
+        console.error("Download Error:", error.message);
+        alert(`Download failed: ${error.message}`);
+    }
+};
   // --- LOGIC: ADD MEMBER TO DRAFT ---
   const handleAddMember = () => {
     if (!tempMember) return;
@@ -269,13 +318,16 @@ const RoomSplitManager = ({ activeRoom, user, onBack }) => {
             <div style={{marginTop: '10px'}}>
                <h1 className="yellow-title" style={{marginBottom: '2px'}}>{activeRoom.roomName}</h1>
                <small style={{color: '#888', textTransform: 'uppercase', letterSpacing: '1px'}}>
-                  Created by: @{activeRoom.createdBy || 'Unknown'}
+                 Created by: @{activeRoom.createdBy || 'Unknown'}
                </small>
             </div>
           </div>
           <div className="header-utility" style={{display:'flex', gap: '12px', alignItems: 'center'}}>
             <button className="btn-yellow-solid" style={{padding: '8px 16px', fontSize: '12px', width:'auto'}} onClick={fetchSummary}>
               <PieChart size={16} style={{marginRight: '6px'}}/> VIEW SUMMARY
+            </button>
+            <button className="btn-yellow-outline" style={{padding: '8px 12px', fontSize: '12px', width:'auto'}} onClick={handleDownload}>
+              <Download size={16} /> DOWNLOAD
             </button>
             <div className="member-count-badge"><Users size={16} /> {activeRoom.members.length} Members</div>
           </div>
@@ -434,18 +486,30 @@ const RoomSplitManager = ({ activeRoom, user, onBack }) => {
       )}
 
       {showRevertModal && (
-        <div className="split-modal-overlay">
-          <div className="revert-modal-v4">
-            <div className="revert-icon-circle"><AlertTriangle size={32} color="#000" /></div>
-            <h2 className="revert-title">ALL SHARES ARE LOCKED</h2>
-            <p className="revert-desc">To change this value, you must <strong>Reset All Manual Locks</strong>. This will return the split to equal distribution.</p>
-            <div className="revert-actions">
-              <button className="btn-revert-confirm" onClick={handleRevertAll}><RotateCcw size={18}/> RESET ALL LOCKS</button>
-              <button className="btn-revert-cancel" onClick={() => setShowRevertModal(false)}>KEEP CURRENT</button>
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="split-modal-overlay">
+    <div className="revert-modal-v4">
+      <div className="revert-icon-circle">
+        <AlertTriangle size={32} color="#000" />
+      </div>
+      
+      <h2 className="revert-title">ALL SHARES ARE LOCKED</h2>
+      
+      <p className="revert-desc">
+        To change this value, you must <strong>Reset All Manual Locks</strong>. 
+        This will return the split to equal distribution.
+      </p>
+
+      <div className="revert-actions">
+        <button className="btn-revert-confirm" onClick={handleRevertAll}>
+          <RotateCcw size={18}/> RESET ALL LOCKS
+        </button>
+        <button className="btn-revert-cancel" onClick={() => setShowRevertModal(false)}>
+          KEEP CURRENT
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {showSummaryModal && (
         <div className="split-modal-overlay">
