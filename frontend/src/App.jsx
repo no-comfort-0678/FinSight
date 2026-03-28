@@ -15,7 +15,11 @@ import Navbar from "./components/navbar/navbar";
 import Profile from "./pages/auth/profile/profile";
 
 function App() {
-  const { user } = useAuth();
+  const { user,authLoading } = useAuth();
+
+  if (authLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
@@ -23,7 +27,10 @@ function App() {
       <Navbar />
 
       <Routes>
-  <Route path="/" element={<Navigate to="/login" replace />} />
+  <Route
+  path="/"
+  element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />}
+/>
   <Route path="/login" element={<Login />} />
   <Route path="/signup" element={<Signup />} />
 

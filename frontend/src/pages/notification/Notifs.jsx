@@ -62,9 +62,27 @@ function Notifs() {
       try {
         if (!user || !user.id) return;
         // Adjusted URL: removing /api if your base path is just /notifications
-        const response = await fetch(`http://localhost:5000/api/notifications/personal/${user.id}`);
+        // const response = await fetch(`http://localhost:5000/api/notifications/personal/${user.id}`);
+        const response = await fetch(
+          `http://localhost:5000/api/notifications/personal/${user.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // 🔥 ADD THIS
+            },
+          }
+        );
+        // const data = await response.json();
+        if (!response.ok) {
+          console.error("Failed:", await response.json());
+          return;
+        }
+
         const data = await response.json();
-        
+
+        if (!Array.isArray(data)) {
+          console.error("Expected array but got:", data);
+          return;
+        }
         const mapped = data.map(n => ({
           id: n.id,
           text: n.message,
@@ -151,7 +169,10 @@ function Notifs() {
         // 2. Tell the database this is READ so it doesn't return on refresh
         // This uses the existing ID from your database results
         await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
-            method: 'PATCH'
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
     } catch (err) {
         console.error("Failed to mark as read in DB:", err);
