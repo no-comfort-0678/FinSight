@@ -15,7 +15,7 @@ import { users } from "./users.js";
 export const reminders = pgTable("reminders", {
   id: uuid("id").defaultRandom().primaryKey(),
 
-  userId: uuid("user_id").notNull(),
+  userId: integer("user_id").notNull(),
 
   title: varchar("title", { length: 255 }).notNull(),
   description: varchar("description", { length: 500 }),

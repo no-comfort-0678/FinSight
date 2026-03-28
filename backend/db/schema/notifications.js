@@ -4,7 +4,7 @@ import { users } from "./users.js";
 export const notifications = pgTable("notifications", {
     id: uuid("id").defaultRandom().primaryKey(),
 
-    userId: uuid("user_id").notNull(),
+    userId: integer("user_id").notNull(),
 
     message: varchar("message", { length: 500 }).notNull(),
     type: varchar("type", { length: 50 }),
