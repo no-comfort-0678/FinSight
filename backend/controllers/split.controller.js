@@ -13,7 +13,95 @@ import PDFDocument from 'pdfkit';
 import { eq, and, sql, desc, ilike, or } from "drizzle-orm";
 
 
+export const getNetTransactions = async (req, res) => {
+    try {
+        const roomId = parseInt(req.params.roomId);
 
+        // 1. Fetch Room to get member list
+        const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId));
+        if (!room) return res.status(404).json({ error: "Room not found" });
+        
+        const memberNames = room.members ? room.members.split(',').map(m => m.trim()) : [];
+
+        // 2. Fetch all pending split members for this room in one shot
+        // Joining splits to know who the 'paid_by' (creditor) is
+        const pendingRows = await db.select({
+            username: splitMembers.username,
+            paidBy: splits.paidBy,
+            amount: splitMembers.amount,
+        })
+        .from(splitMembers)
+        .innerJoin(splits, eq(splitMembers.splitId, splits.id))
+        .where(and(
+            eq(splits.roomId, roomId),
+            eq(splitMembers.status, 'pending')
+        ));
+
+        // 3. Aggregate Net Balances
+        // Positive = People owe you | Negative = You owe people
+        const balanceMap = {};
+        memberNames.forEach(name => balanceMap[name] = 0);
+
+        pendingRows.forEach(row => {
+            const amt = parseFloat(row.amount);
+            // The person in splitMembers owes money (negative balance)
+            balanceMap[row.username] -= amt;
+            // The person who paid the bill is owed money (positive balance)
+            balanceMap[row.paidBy] += amt;
+        });
+
+        // 4. Split into Debtors and Creditors
+        let debtors = [];
+        let creditors = [];
+
+        Object.keys(balanceMap).forEach(user => {
+            const bal = balanceMap[user];
+            if (bal < -0.01) {
+                debtors.push({ username: user, balance: bal });
+            } else if (bal > 0.01) {
+                creditors.push({ username: user, balance: bal });
+            }
+        });
+
+        // Sort: Most negative first, Most positive first
+        debtors.sort((a, b) => a.balance - b.balance);
+        creditors.sort((a, b) => b.balance - a.balance);
+
+        const transactions = [];
+        let dIdx = 0;
+        let cIdx = 0;
+
+        // 5. Match Debtors to Creditors (The Minimization Logic)
+        while (dIdx < debtors.length && cIdx < creditors.length) {
+            const debtor = debtors[dIdx];
+            const creditor = creditors[cIdx];
+
+            const amountToSettle = Math.min(Math.abs(debtor.balance), creditor.balance);
+
+            if (amountToSettle > 0.009) {
+                transactions.push({
+                    from: debtor.username,
+                    to: creditor.username,
+                    amount: amountToSettle.toFixed(2)
+                });
+            }
+
+            // Update remaining balances for these users
+            debtor.balance += amountToSettle;
+            creditor.balance -= amountToSettle;
+
+            // Move to next person if their balance is cleared
+            if (Math.abs(debtor.balance) < 0.01) dIdx++;
+            if (Math.abs(creditor.balance) < 0.01) cIdx++;
+        }
+
+        return res.status(200).json(transactions);
+
+    } catch (err) {
+        console.error("Net Transaction Error:", err);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+};
 
 export const getRooms = async (req, res) => {
     try {
@@ -553,71 +641,76 @@ export const handleExportPDF = async (req, res) => {
     }
 };
 
+
 /**
- * Comments: Fixed Exit & Transfer logic.
- * Fix: Uses req.user.id to match against ownerId (Integer).
- * Fix: Uses .returning() to ensure DB updates are captured.
- * Rule [2026-03-28]: Providing the whole code after changes.
+ * [2026-03-29] FIXED EXIT CONTROLLER
+ * Logic: Returns 400 with balance if user is not settled.
  */
 export const handleUserExit = async (req, res) => {
     try {
         const roomId = parseInt(req.params.id);
-        const currentUserId = req.user?.id; // From your terminal log: 17
-        
-        // We need the username string to remove it from the members list
-        // If your middleware doesn't have it, we fetch it from the DB
+        const currentUserId = req.user?.id; 
+
         const [currentUser] = await db.select().from(users).where(eq(users.id, currentUserId));
-        if (!currentUser) return res.status(401).json({ error: "User not found" });
-        
+        if (!currentUser) return res.status(401).json({ error: "USER_NOT_FOUND" });
         const currentUsername = currentUser.username;
 
         const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId));
-        if (!room) return res.status(404).json({ message: "Room not found" });
+        if (!room) return res.status(404).json({ error: "ROOM_NOT_FOUND" });
 
-        let memberList = room.members ? room.members.split(',').map(m => m.trim()) : [];
-        
-        if (!memberList.includes(currentUsername)) {
-            return res.status(200).json({ message: "Already exited" });
-        }
+        // 1. Calculate the user's Net Balance in this specific room
+        const pendingRows = await db.select({
+            username: splitMembers.username,
+            paidBy: splits.paidBy,
+            amount: splitMembers.amount,
+        })
+        .from(splitMembers)
+        .innerJoin(splits, eq(splitMembers.splitId, splits.id))
+        .where(and(
+            eq(splits.roomId, roomId),
+            eq(splitMembers.status, 'pending')
+        ));
 
-        await db.transaction(async (tx) => {
-            // 1. OWNER TRANSFER (Compare ID to ownerId)
-            if (room.ownerId === currentUserId) {
-                const { newOwnerUsername } = req.body;
-                if (!newOwnerUsername) {
-                    throw new Error("TRANSFER_REQUIRED");
-                }
-
-                // Look up the new owner's ID to update ownerId field
-                const [newOwner] = await tx.select().from(users).where(eq(users.username, newOwnerUsername));
-                if (!newOwner) throw new Error("NEW_OWNER_NOT_FOUND");
-
-                await tx.update(rooms)
-                    .set({ 
-                        ownerId: newOwner.id, 
-                        createdBy: newOwner.username 
-                    })
-                    .where(eq(rooms.id, roomId));
-            }
-
-            // 2. REMOVE FROM MEMBERS STRING
-            const updatedMembers = memberList.filter(m => m !== currentUsername).join(',');
-            await tx.update(rooms)
-                .set({ members: updatedMembers })
-                .where(eq(rooms.id, roomId));
-
-            // 3. WIPE FROM SPLITS (The "Ghost" Fix)
-            await tx.delete(splitMembers)
-                .where(and(
-                    eq(splitMembers.roomId, roomId),
-                    eq(splitMembers.username, currentUsername)
-                ));
+        let netBalance = 0;
+        pendingRows.forEach(row => {
+            const amt = parseFloat(row.amount);
+            if (row.username === currentUsername) netBalance -= amt;
+            if (row.paidBy === currentUsername) netBalance += amt;
         });
 
-        res.status(200).json({ message: "Exited successfully" });
+        // 2. The Gatekeeper: Block exit if balance is not zero
+        if (Math.abs(netBalance) > 0.01) {
+            // We use 400 (Bad Request) to indicate a validation failure
+            return res.status(400).json({ 
+                error: "DEBT_PENDING", 
+                netBalance: netBalance.toFixed(2) 
+            });
+        }
+
+        // 3. Proceed with Exit Transaction
+        await db.transaction(async (tx) => {
+            // Transfer ownership if exiting user is the owner
+            if (room.ownerId === currentUserId) {
+                const { newOwnerUsername } = req.body;
+                if (!newOwnerUsername) throw new Error("TRANSFER_REQUIRED");
+                const [newOwner] = await tx.select().from(users).where(eq(users.username, newOwnerUsername));
+                await tx.update(rooms).set({ ownerId: newOwner.id, createdBy: newOwner.username }).where(eq(rooms.id, roomId));
+            }
+
+            // Remove from member string
+            let memberList = room.members ? room.members.split(',').map(m => m.trim()) : [];
+            const updatedMembers = memberList.filter(m => m !== currentUsername).join(',');
+            await tx.update(rooms).set({ members: updatedMembers }).where(eq(rooms.id, roomId));
+
+            // Clean up old settled records
+            await tx.delete(splitMembers).where(and(eq(splitMembers.roomId, roomId), eq(splitMembers.username, currentUsername)));
+        });
+
+        return res.status(200).json({ message: "SUCCESS" });
+
     } catch (err) {
-        console.error("EXIT ERROR:", err);
-        const msg = err.message === "TRANSFER_REQUIRED" ? "Successor required" : "Exit failed";
-        res.status(500).json({ error: msg });
+        console.error("EXIT ERROR:", err.message);
+        const statusCode = err.message === "TRANSFER_REQUIRED" ? 400 : 500;
+        return res.status(statusCode).json({ error: err.message });
     }
 };
