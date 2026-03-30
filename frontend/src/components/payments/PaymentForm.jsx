@@ -122,9 +122,9 @@ export default function PaymentForm({ onSuccess }) {
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
-          <option value="">Select Category</option>
+          <option value="" className="text-zinc-500">Select Category</option>
           {categories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
+            <option key={cat} value={cat} className="text-black">{cat}</option>
           ))}
         </select>
       </div>

@@ -5,6 +5,7 @@ import Stats from "../../components/dashboard/Stats";
 import SpendingTrendChart from "../../components/charts/SpendingTrendChart";
 import CategoryBreakdownChart from "../../components/charts/CategoryBreakDownChart";
 import RecentTransactionsTable from "../../components/dashboard/RecentTransactions";
+import ChatBox from "../../components/ChatBox";
 import { useAuth } from "../../context/AuthContext";
 
 function Dashboard() {
@@ -61,7 +62,9 @@ function Dashboard() {
 
       {/* Recent Transactions */}
       <RecentTransactionsTable filterCategory={selectedCategory} />
-
+      <ChatBox selectedCategory={selectedCategory}
+        month={month}
+        year={year} />
     </div>
   );
 }
