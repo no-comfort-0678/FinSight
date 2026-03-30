@@ -140,7 +140,7 @@ nav .functions button:hover {
   font-size: 2vh;
   background: transparent;
   cursor: pointer;
-  color: rgb(224, 198, 0);
+color: rgb(224, 198, 0);
   border: 0;
   transform: translateY(0);
   border-radius: 15px;
