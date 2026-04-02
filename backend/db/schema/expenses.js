@@ -26,7 +26,7 @@ export const expenses = pgTable("expenses", {
 
   fileUrl: text("file_url"),
 
-  fileHash: varchar("file_hash", { length: 64 }).notNull().unique(),
+  fileHash: varchar("file_hash", { length: 64 }).notNull(),
 
   ocrText: text("ocr_text"),
 
@@ -35,4 +35,14 @@ export const expenses = pgTable("expenses", {
   category: varchar("category", { length: 100 }).default("Other"),
 
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const expenseItems = pgTable("expense_items", {
+  id: serial("id").primaryKey(),
+  expenseId: integer("expense_id")
+    .notNull()
+    .references(() => expenses.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  amount: numeric("amount", { precision: 15, scale: 2 }).notNull(),
+  category: varchar("category", { length: 100 }).default("Other"),
 });

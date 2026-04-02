@@ -15,7 +15,7 @@ import Navbar from "./components/navbar/navbar";
 import Profile from "./pages/auth/profile/profile";
 
 function App() {
-  const { user,authLoading } = useAuth();
+  const { user, authLoading } = useAuth();
 
   if (authLoading) {
     return <div>Loading...</div>;
@@ -27,81 +27,89 @@ function App() {
       <Navbar />
 
       <Routes>
-  <Route
-  path="/"
-  element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />}
-/>
-  <Route path="/login" element={<Login />} />
-  <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/"
+          element={
+            user ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
 
-  <Route
-    path="/dashboard"
-    element={
-      <ProtectedRoute>
-        <AppLayout>
-          <Dashboard />
-        </AppLayout>
-      </ProtectedRoute>
-    }
-  />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Dashboard />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
 
-  <Route
-    path="/home"
-    element={
-      <ProtectedRoute>
-        <Home />
-      </ProtectedRoute>
-    }
-  />
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Transaction page="history" />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
 
-  <Route
-    path="/transactions/entry"
-    element={
-      <ProtectedRoute>
-        <Transaction page="entry" />
-      </ProtectedRoute>
-    }
-  />
+        <Route
+          path="/transactions/entry"
+          element={
+            <ProtectedRoute>
+              <Transaction page="entry" />
+            </ProtectedRoute>
+          }
+        />
 
-  <Route
-    path="/transactions/payments"
-    element={
-      <ProtectedRoute>
-        <Transaction page="payments" />
-      </ProtectedRoute>
-    }
-  />
+        <Route
+          path="/transactions/payments"
+          element={
+            <ProtectedRoute>
+              <Transaction page="payments" />
+            </ProtectedRoute>
+          }
+        />
 
-  <Route
-    path="/split"
-    element={
-      <ProtectedRoute>
-        <Split />
-      </ProtectedRoute>
-    }
-  />
+        <Route
+          path="/split"
+          element={
+            <ProtectedRoute>
+              <Split />
+            </ProtectedRoute>
+          }
+        />
 
-  <Route
-    path="/notifications"
-    element={
-      <ProtectedRoute>
-        <Notifs />
-      </ProtectedRoute>
-    }
-  />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifs />
+            </ProtectedRoute>
+          }
+        />
 
-  <Route
-    path="/profile"
-    element={
-      <ProtectedRoute>
-        <Profile />
-      </ProtectedRoute>
-    }
-  />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
 
-  <Route path="*" element={<NotFound />} />
-</Routes>
-</>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 }
 

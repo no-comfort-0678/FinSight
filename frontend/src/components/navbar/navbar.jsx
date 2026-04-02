@@ -18,7 +18,7 @@ const Navbar = () => {
       <div
         className="title"
         style={{ cursor: "pointer" }}
-        onClick={() => navigate(user ? "/home" : "/login")}
+        onClick={() => navigate(user ? "/dashboard" : "/login")}
       >
         <img src="/2.png" alt="FinSight Icon" />
         <div id="text">
