@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./signup.css";
 
+
 function Signup() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -9,20 +10,25 @@ function Signup() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
 
+
   const [password, setPassword] = useState("");
   const [conf, setConf] = useState("");
+
 
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmError, setConfirmError] = useState("");
 
+
   const [isValid, setIsValid] = useState(false);
   const navigate = useNavigate();
+
 
   useEffect(() => {
     let pErr = "";
     let cErr = "";
     let eErr = "";
+
 
     if (password.length > 0) {
       const hasLetter = /[a-zA-Z]/.test(password);
@@ -33,9 +39,11 @@ function Signup() {
       }
     }
 
+
     if (conf.length > 0 && password !== conf) {
       cErr = "Passwords do not match.";
     }
+
 
     if (email.length > 0) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -44,9 +52,11 @@ function Signup() {
       }
     }
 
+
     setPasswordError(pErr);
     setConfirmError(cErr);
     setEmailError(eErr);
+
 
     if (
       name &&
@@ -65,8 +75,10 @@ function Signup() {
     }
   }, [name, username, upiId, phone, email, password, conf]);
 
+
   const handleSignup = async () => {
     if (!isValid) return;
+
 
     try {
       const response = await fetch(
@@ -85,7 +97,9 @@ function Signup() {
         }
       );
 
+
       const data = await response.json();
+
 
       if (response.ok) {
         alert("Account Created! Please log in.");
@@ -99,10 +113,20 @@ function Signup() {
     }
   };
 
+
   return (
-    <div id="inp-box">
-      <h2>Sign Up</h2>
+    <div className="auth-page-container">
+  <div className="auth-sidebar">
+     <div className="brand-pill">FinSight Ecosystem</div>
+     <h1>Join the <span>Future</span> of Finance.</h1>
+     {/* Add Value Tiles here */}
+  </div>
+  <div className="auth-form-section">
+     <div id="inp-box" className="signup-box">
+        {/* Your Sign-up Form */}
+        <h2>Sign Up</h2>
       <div id="info">
+
 
         <div className="row">
           <span className="conf">Full Name :</span>
@@ -116,6 +140,7 @@ function Signup() {
           </div>
         </div>
 
+
         <div className="row">
           <span className="conf">Username :</span>
           <div className="input-group">
@@ -127,6 +152,7 @@ function Signup() {
             />
           </div>
         </div>
+
 
         <div className="row">
           <span className="conf">UPI ID :</span>
@@ -140,6 +166,7 @@ function Signup() {
           </div>
         </div>
 
+
         <div className="row">
           <span className="conf">Phone :</span>
           <div className="input-group">
@@ -151,6 +178,7 @@ function Signup() {
             />
           </div>
         </div>
+
 
         <div className="row">
           <span className="conf">Email :</span>
@@ -164,6 +192,7 @@ function Signup() {
             {emailError && <span className="error-msg">{emailError}</span>}
           </div>
         </div>
+
 
         <div className="row">
           <span className="conf">New Password :</span>
@@ -180,6 +209,7 @@ function Signup() {
           </div>
         </div>
 
+
         <div className="row">
           <span className="conf">Confirm Password :</span>
           <div className="input-group">
@@ -195,13 +225,18 @@ function Signup() {
           </div>
         </div>
 
+
       </div>
+
 
       <button id="submit" onClick={handleSignup} disabled={!isValid}>
         Sign Up
       </button>
-    </div>
+     </div>
+  </div>
+</div>
   );
 }
+
 
 export default Signup;

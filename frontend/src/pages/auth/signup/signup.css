@@ -1,154 +1,363 @@
-#inp-box {
-position: absolute;
-top: 53%;
-left: 50%;
-transform: translate(-50%, -50%);
-width: 30vw;
-min-width: 450px;
-max-width: 90%;
-min-height: 60vh;
-padding: 3rem 0;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: space-between;
-background-color: rgba(0, 0, 0, 0.52);
-backdrop-filter: blur(15px);
-border-radius: 2.5rem;
-box-shadow: 0 10px 15px rgba(0, 0, 0, 0.376);
-border: 1px solid rgba(255, 255, 255, 0.342);
+/* --- Global Reset & Layout --- */
+.auth-page-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: #000;
+  color: #fff;
+  font-family: 'Inter', sans-serif; /* Recommended professional font */
 }
+
+
+/* --- Left Sidebar (Branding Section) --- */
+.auth-sidebar {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 8%;
+  background: radial-gradient(circle at top left, rgba(245, 158, 11, 0.08), transparent 50%);
+}
+
+
+@media (max-width: 1024px) {
+  .auth-sidebar { display: none; } /* Focus on form for tablet/mobile */
+}
+
+
+.brand-pill {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  padding: 6px 16px;
+  border-radius: 30px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: fit-content;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+
+.auth-sidebar h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  font-weight: 800;
+}
+
+
+.auth-sidebar h1 span {
+  color: #f59e0b;
+}
+
+
+.auth-sidebar p {
+  color: #a1a1aa;
+  font-size: 1.1rem;
+  max-width: 480px;
+  line-height: 1.6;
+}
+
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+}
+
+
+.feature-list li {
+  margin-bottom: 15px;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #e4e4e7;
+}
+
+
+.testimonial-mini {
+  border-left: 2px solid #f59e0b;
+  padding-left: 1.5rem;
+  color: #71717a;
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+
+/* --- Right Side (Form Section) --- */
+.auth-form-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: radial-gradient(circle at center, rgba(245, 158, 11, 0.03), transparent 70%);
+}
+
+
+#inp-box {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 2.5rem; /* Tightened from 3rem */
+  width: 100%;
+  max-width: 380px; /* Narrower box for professional look */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
 
 #inp-box h2 {
-text-align: center;
-font-weight: 300;
-font-size: 2.5rem;
-color: #b5d4ab;
-margin: 1vh;
+  font-size: 1.75rem;
+  margin-bottom: 2rem;
+  color: #f59e0b;
+  font-weight: 700;
+  text-align: center;
 }
 
-#info {
-display: flex;
-flex-direction: column;
-gap: 2rem;
-width: 90%;
-justify-content: center;
-flex-grow: 1;
-}
 
+/* --- Label & Input Alignment Fix --- */
 .row {
-display: grid;
-grid-template-columns: 150px 1fr;
-align-items: center;
-gap: 1rem;
-width: 100%;
+  display: flex;
+  flex-direction: column; /* Stacks label above input */
+  gap: 8px; /* Precise gap between label and field */
+  margin-bottom: 1.25rem;
+  width: 100%;
 }
+
 
 .conf {
-justify-self: start;
-color: #b5d4ab;
-font-size: 1.1rem;
-white-space: nowrap;
-display: flex;
-align-items: center;
-margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #d4d4d8;
+  display: block;
 }
+
 
 .input-group {
-display: flex;
-flex-direction: column;
-width: 100%;
-position: relative;
+  position: relative;
+  width: 100%;
 }
+
 
 .input-group input {
-width: 100%;
-height: 2.8rem;
-background-color: rgba(255, 255, 255, 0.52);
-border-radius: 1rem;
-border: 1px solid transparent;
-color: black;
-padding-left: 1rem;
-font-size: 1rem;
-outline: none;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box; /* Crucial for width alignment */
 }
 
-.error-msg {
-position: absolute;
-bottom: -1rem;
-left: 0.5rem;
-width: 100%;
-color: #ff6b6b;
-font-size: 0.75rem;
-font-weight: 500;
-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-pointer-events: none;
+
+.input-group input:focus {
+  border-color: #f59e0b;
+  outline: none;
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
 }
 
-#submit {
-height: 3rem;
-width: 12rem;
-background-color: transparent;
-color: #b5d4ab;
-font-size: 1.25rem;
-font-weight: 400;
-border-radius: 1rem;
-border: 1px solid transparent;
-cursor: pointer;
-transition: all 0.3s ease-in-out;
-flex-shrink: 0;
-}
 
-#submit:hover {
-background-color: rgba(0, 0, 0, 0.3);
-transform: translateY(-2px);
-box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-#submit:disabled {
-opacity: 0.5;
-cursor: not-allowed;
-transform: none;
-}
-
+/* --- Interactive Elements --- */
 .forgot-pass {
-align-self: flex-end;
-color: #ff6b6b;
-font-size: 0.8rem;
-margin-top: 5px;
-cursor: pointer;
-transition: color 0.2s;
+  font-size: 0.75rem;
+  color: #f59e0b;
+  cursor: pointer;
+  margin-top: 5px;
+  display: block;
+  text-align: right;
+  transition: 0.2s;
 }
+
 
 .forgot-pass:hover {
-color: #ff5252;
-text-decoration: underline;
+  color: #fbbf24;
+  text-decoration: underline;
 }
+
+
+#submit {
+  width: 100%;
+  background: #f59e0b;
+  color: #000;
+  font-weight: 800;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  margin-top: 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+
+#submit:hover {
+  background: #fbbf24;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+}
+
 
 .bottom-links {
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 5px;
-margin-top: 1rem;
+  margin-top: 1.5rem;
 }
+
 
 .redirect-text {
-margin: 0;
-font-size: 0.9rem;
-color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: #71717a;
+  text-align: center;
 }
+
 
 .redirect-text span {
-color: rgb(224, 198, 0);
-cursor: pointer;
-font-weight: 600;
-margin-left: 5px;
-text-decoration: none;
-transition: all 0.2s;
+  color: #f59e0b;
+  cursor: pointer;
+  font-weight: 700;
+  transition: 0.2s;
 }
 
+
 .redirect-text span:hover {
-text-decoration: underline;
-color: rgb(255, 230, 0);
+  color: #fbbf24;
+  text-decoration: underline;
+}
+
+
+/* --- Security Footer --- */
+.security-footer {
+  margin-top: 2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #3f3f46;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+
+.lock-icon { font-style: normal; }
+
+
+/* Error messages for Reset View */
+.error-msg {
+  color: #ef4444;
+  font-size: 0.7rem;
+  margin-top: 4px;
+}
+
+
+/* Optimized for the larger Sign-Up form */
+#inp-box.signup-box {
+  max-width: 460px; /* Slightly wider to accommodate longer names/UPI IDs */
+  padding: 2.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+}
+
+
+/* Grid layout for fields to prevent the 'thin' look */
+.signup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two columns for desktop */
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+
+@media (max-width: 600px) {
+  .signup-grid { grid-template-columns: 1fr; }
+}
+
+
+/* Enhanced Label Placement */
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+
+.conf {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #f59e0b; /* Yellow branding */
+  font-weight: 700;
+}
+
+
+/* Hardcoded Feature: Password Strength Meter */
+.strength-meter {
+  height: 4px;
+  width: 100%;
+  background: #27272a;
+  margin-top: 8px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+
+.strength-bar {
+  height: 100%;
+  width: 40%; /* Dynamic via JS */
+  background: #f59e0b;
+  transition: 0.3s ease;
+}
+
+
+/* --- Password Reset Specifics --- */
+
+
+/* Error Messages: Professional Red but Muted */
+.error-msg {
+  color: #fb7185; /* Soft Rose-Red */
+  font-size: 0.75rem;
+  margin-top: 6px;
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* Disabled Button State: Professional Grey-out */
+#submit:disabled {
+  background: #27272a; /* Dark Zinc */
+  color: #52525b;
+  cursor: not-allowed;
+  transform: none; /* Remove hover lift */
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+
+/* Optional: Requirement Hint List in Sidebar */
+.feature-list li {
+  font-size: 0.9rem;
+  color: #a1a1aa;
+  margin-bottom: 10px;
+}
+
+
+/* Input Group adjustments for Reset */
+.input-group {
+  margin-bottom: 5px; /* Less space between input and its error msg */
 }

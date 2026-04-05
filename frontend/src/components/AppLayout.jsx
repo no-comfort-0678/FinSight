@@ -1,22 +1,22 @@
+
 import Navbar from "../components/navbar/navbar";
+
 
 const AppLayout = ({ children }) => {
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      
-      {/* Navbar slot */}
-      <div className="relative h-[14vh] min-h-[90px] flex-shrink-0">
+    <div className="min-h-screen flex flex-col">
+     
+      <div className="w-full flex-shrink-0">
         <Navbar />
       </div>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-hidden">
+
+      <main className="flex-1 w-full">
         {children}
-      </div>
+      </main>
     </div>
   );
 };
 
+
 export default AppLayout;
-
-

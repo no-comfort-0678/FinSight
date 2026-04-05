@@ -6,9 +6,9 @@ const API_BASE = "http://localhost:5000/api/receipts/upload";
 
 const UploadBill = ({ onSuccess }) => {
   const { user, token } = useAuth();
-  const navigate        = useNavigate();
-  const [file,    setFile]    = useState(null);
-  const [status,  setStatus]  = useState("");
+  const navigate = useNavigate();
+  const [file, setFile] = useState(null);
+  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -38,9 +38,7 @@ const UploadBill = ({ onSuccess }) => {
 
       const dataResp = await res.json();
       setStatus("Bill uploaded and processed!");
-
       onSuccess?.(dataResp);
-
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
       console.error(err);
@@ -58,7 +56,6 @@ const UploadBill = ({ onSuccess }) => {
       </p>
 
       {!file && !loading ? (
-        /* ── Drop zone ── */
         <div className="fs-dropzone" onClick={() => fileInputRef.current.click()}>
           <input
             type="file"
@@ -67,35 +64,48 @@ const UploadBill = ({ onSuccess }) => {
             onChange={handleFileChange}
             accept="image/*,application/pdf"
           />
+
+          {/* FIX: every path command must start with M — was missing on first path */}
           <svg
             className="fs-dropzone__icon"
-            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
-              d="7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.5"
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
             />
           </svg>
+
           <p className="fs-dropzone__text">Click to upload or drag &amp; drop</p>
           <p className="fs-dropzone__hint">PNG, JPG or PDF up to 10MB</p>
         </div>
       ) : (
-        /* ── Status panel ── */
         <div className="fs-upload-status">
           {loading && <div className="fs-upload-spinner" />}
-          <p className={`fs-upload-status__text ${
-            loading
-              ? "fs-upload-status__text--proc"
-              : status.includes("failed") || status.includes("Failed")
-              ? "fs-upload-status__text--error"
-              : "fs-upload-status__text--success"
-          }`}>
+          <p
+            className={`fs-upload-status__text ${
+              loading
+                ? "fs-upload-status__text--proc"
+                : status.toLowerCase().includes("fail") ||
+                  status.toLowerCase().includes("error")
+                ? "fs-upload-status__text--error"
+                : "fs-upload-status__text--success"
+            }`}
+          >
             {status}
           </p>
           {!loading && (
             <button
               className="fs-upload-again"
-              onClick={() => { setFile(null); setStatus(""); }}
+              onClick={() => {
+                setFile(null);
+                setStatus("");
+              }}
             >
               Upload another
             </button>
