@@ -1,7 +1,7 @@
 import express from "express";
 import { db } from "../db/db.js";
 import { notifications } from "../db/schema/notifications.js";
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { protect } from "../middlewares/auth.middleware.js";
 import { sendEmailNotification } from "../services/email.service.js";
 
@@ -16,8 +16,9 @@ router.get("/", async (req, res) => {
         const userId = req.user.id;
         const data = await db
             .select()
-            .from(schema.notifications)
-            .where(eq(schema.notifications.userId, userId));
+            .from(notifications)
+            .where(eq(notifications.userId, userId))
+            .orderBy(desc(notifications.createdAt));
 
         res.json(data);
     } catch (err) {
@@ -37,7 +38,7 @@ router.post("/", async (req, res) => {
         }
 
         const [created] = await db
-            .insert(schema.notifications)
+            .insert(notifications)
             .values({ userId, message, type })
             .returning();
 
@@ -59,13 +60,18 @@ router.post("/", async (req, res) => {
 // PATCH /api/notifications/:id/read — Mark a notification as read
 router.patch("/:id/read", async (req, res) => {
     try {
+        const userId = req.user.id;
         const id = Number(req.params.id);
         const [updated] = await db
-            .update(schema.notifications)
+            .update(notifications)
             .set({ isRead: true })
-            .where(eq(schema.notifications.id, id))
+            .where(and(
+                eq(notifications.id, id),
+                eq(notifications.userId, userId)
+            ))
             .returning();
 
+        if (!updated) return res.status(404).json({ message: "Notification not found" });
         res.json(updated);
     } catch (err) {
         console.error("MARK READ ERROR:", err);
@@ -76,12 +82,17 @@ router.patch("/:id/read", async (req, res) => {
 // DELETE /api/notifications/:id — Delete a notification
 router.delete("/:id", async (req, res) => {
     try {
+        const userId = req.user.id;
         const id = Number(req.params.id);
         const [deleted] = await db
-            .delete(schema.notifications)
-            .where(eq(schema.notifications.id, id))
+            .delete(notifications)
+            .where(and(
+                eq(notifications.id, id),
+                eq(notifications.userId, userId)
+            ))
             .returning();
 
+        if (!deleted) return res.status(404).json({ message: "Notification not found" });
         res.json({ message: "Notification deleted", id: deleted.id });
     } catch (err) {
         console.error("DELETE NOTIFICATION ERROR:", err);

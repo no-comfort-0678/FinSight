@@ -9,6 +9,7 @@ import notificationsRoutes from "./routes/notifications.routes.js";
 import splitroutes from "./routes/split.routes.js";
 import receipts from "./routes/receipts.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import { startReminderScheduler } from "./services/reminderScheduler.service.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 

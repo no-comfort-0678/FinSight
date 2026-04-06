@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import "./notifs.css";
 import { useAuth } from "../../context/AuthContext";
 
-const API_BASE = "http://localhost:5000/api/v1/reminders";
+const REMINDERS_API_BASE = "http://localhost:5000/api/v1/reminders";
+const NOTIFS_API_BASE = "http://localhost:5000/api/notifications";
 
 function Notifs() {
   const [activeTab, setActiveTab] = useState("reminders");
@@ -11,7 +12,7 @@ function Notifs() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const { user, token } = useAuth();
+  const { token } = useAuth();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -23,18 +24,16 @@ function Notifs() {
   const [reminders, setReminders] = useState([]);
   const [notifications, setNotifications] = useState([]);
 
-  // ─── Fetch reminders from backend ─────────────────────────────────────────
   const fetchReminders = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(API_BASE, {
+      const res = await fetch(REMINDERS_API_BASE, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch reminders");
       const data = await res.json();
-      // Normalize backend fields to frontend format
       setReminders(
         data.map((r) => ({
           id: r.id,
@@ -52,65 +51,68 @@ function Notifs() {
     }
   }, [token]);
 
+  const fetchNotifications = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(NOTIFS_API_BASE, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch notifications");
+      const data = await res.json();
+      setNotifications(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  }, [token]);
+
   useEffect(() => {
     fetchReminders();
-  }, [fetchReminders]);
+    fetchNotifications();
+  }, [fetchReminders, fetchNotifications]);
 
-  // ─── Fire notifications for past, unnotified reminders ────────────────────
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const now = new Date();
-
-      for (const r of reminders) {
-        const reminderTime = new Date(`${r.date}T${r.time}`);
-        if (now > reminderTime && !r.notified) {
-          // Add to local notifications
-          setNotifications((prev) => [
-            {
-              id: Date.now(),
-              createdAt: new Date(),
-              text: `Reminder: ${r.title} (₹${r.amount})`,
-              unread: true,
-              type: "monthly",
-            },
-            ...prev,
-          ]);
-
-          // Optimistically mark notified locally
-          setReminders((prev) =>
-            prev.map((item) =>
-              item.id === r.id ? { ...item, notified: true } : item
-            )
-          );
-
-          // Persist to backend
-          try {
-            await fetch(`${API_BASE}/${r.id}/notify`, {
-              method: "PATCH",
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          } catch (_) {
-            // Silently fail — user already sees local notification
-          }
-        }
-      }
-    }, 5000);
-
+    if (!token) return;
+    const interval = setInterval(() => {
+      fetchNotifications();
+      fetchReminders();
+    }, 30000);
     return () => clearInterval(interval);
-  }, [reminders, token]);
+  }, [token, fetchNotifications, fetchReminders]);
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
   const isWithinLastMonth = (notifDate) => {
     const now = new Date();
     const oneMonthInMs = 30 * 24 * 60 * 60 * 1000;
     return now - new Date(notifDate) < oneMonthInMs;
   };
 
-  const removeNotif = (id) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  const removeNotif = async (id) => {
+    try {
+      const res = await fetch(`${NOTIFS_API_BASE}/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to delete notification");
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
-  // ─── Create / Update reminder ─────────────────────────────────────────────
+  const markAsRead = async (id) => {
+    try {
+      const res = await fetch(`${NOTIFS_API_BASE}/${id}/read`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to mark notification as read");
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!formData.title || !formData.date || !formData.time) return;
 
@@ -124,7 +126,7 @@ function Notifs() {
     try {
       setLoading(true);
       if (editingId) {
-        const res = await fetch(`${API_BASE}/${editingId}`, {
+        const res = await fetch(`${REMINDERS_API_BASE}/${editingId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -138,18 +140,18 @@ function Notifs() {
           prev.map((r) =>
             r.id === editingId
               ? {
-                id: updated.id,
-                title: updated.title,
-                date: updated.reminderDate,
-                time: updated.reminderTime,
-                amount: updated.amount,
-                notified: updated.notified,
-              }
+                  id: updated.id,
+                  title: updated.title,
+                  date: updated.reminderDate,
+                  time: updated.reminderTime,
+                  amount: updated.amount,
+                  notified: updated.notified,
+                }
               : r
           )
         );
       } else {
-        const res = await fetch(API_BASE, {
+        const res = await fetch(REMINDERS_API_BASE, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -180,10 +182,9 @@ function Notifs() {
     }
   };
 
-  // ─── Delete reminder ──────────────────────────────────────────────────────
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${API_BASE}/${id}`, {
+      const res = await fetch(`${REMINDERS_API_BASE}/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -204,7 +205,7 @@ function Notifs() {
     });
   };
 
-  const hasUnread = notifications.some((n) => n.unread);
+  const hasUnread = notifications.some((n) => !n.isRead);
 
   return (
     <div className="notifs-container">
@@ -227,7 +228,7 @@ function Notifs() {
           </h2>
         </div>
 
-        {error && <p className="error-msg">⚠ {error}</p>}
+        {error && <p className="error-msg">Warning: {error}</p>}
 
         <div id="content-area">
           {activeTab === "reminders" && (
@@ -273,7 +274,7 @@ function Notifs() {
                 <div className="notifs-input">
                   <input
                     type="number"
-                    placeholder="₹ 0"
+                    placeholder="INR 0"
                     value={formData.amount}
                     onChange={(e) =>
                       setFormData({ ...formData, amount: e.target.value })
@@ -282,16 +283,8 @@ function Notifs() {
                 </div>
               </div>
 
-              <button
-                id="submit-btn"
-                onClick={handleSubmit}
-                disabled={loading}
-              >
-                {loading
-                  ? "Saving..."
-                  : editingId
-                    ? "Update Reminder"
-                    : "Add Reminder"}
+              <button id="submit-btn" onClick={handleSubmit} disabled={loading}>
+                {loading ? "Saving..." : editingId ? "Update Reminder" : "Add Reminder"}
               </button>
 
               {editingId && (
@@ -309,7 +302,7 @@ function Notifs() {
               <hr className="divider" />
 
               {loading && reminders.length === 0 ? (
-                <p className="empty-msg">Loading reminders…</p>
+                <p className="empty-msg">Loading reminders...</p>
               ) : (
                 <div className="list-container">
                   {reminders.length === 0 && (
@@ -320,24 +313,16 @@ function Notifs() {
                       <div>
                         <strong>{r.title}</strong>
                         <small>
-                          {r.date} • {r.time}
-                          {r.notified && (
-                            <span className="notified-badge"> ✓ Notified</span>
-                          )}
+                          {r.date} | {r.time}
+                          {r.notified && <span className="notified-badge"> | Notified</span>}
                         </small>
                       </div>
                       <div className="item-right">
-                        <span className="item-amount">₹{r.amount}</span>
-                        <button
-                          className="edit-action-btn"
-                          onClick={() => handleEdit(r)}
-                        >
+                        <span className="item-amount">INR {r.amount}</span>
+                        <button className="edit-action-btn" onClick={() => handleEdit(r)}>
                           Edit
                         </button>
-                        <button
-                          className="delete-action-btn"
-                          onClick={() => handleDelete(r.id)}
-                        >
+                        <button className="delete-action-btn" onClick={() => handleDelete(r.id)}>
                           Delete
                         </button>
                       </div>
@@ -369,19 +354,17 @@ function Notifs() {
                 {notifications
                   .filter((n) => {
                     if (filter === "lifetime") return true;
-                    return (
-                      n.type === "monthly" && isWithinLastMonth(n.createdAt)
-                    );
+                    return isWithinLastMonth(n.createdAt);
                   })
                   .map((n) => (
                     <div
                       key={n.id}
-                      className={`list-item clickable-notif ${n.unread ? "unread" : ""
-                        }`}
-                      onClick={() => removeNotif(n.id)}
-                      title="Click to dismiss"
+                      className={`list-item clickable-notif ${!n.isRead ? "unread" : ""}`}
+                      onClick={() => markAsRead(n.id)}
+                      onDoubleClick={() => removeNotif(n.id)}
+                      title="Click to mark read, double-click to delete"
                     >
-                      {n.text}
+                      {n.message}
                     </div>
                   ))}
                 {notifications.length === 0 && (
