@@ -1,5 +1,5 @@
 import { db, schema } from "../db/db.js";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 export const createReminder = async ({ userId, title, remindAt, description }) => {
     const [reminder] = await db
@@ -22,7 +22,7 @@ export const updateReminderById = async (id, userId, updates) => {
         .update(schema.reminders)
         .set(updates)
         .where(and(
-            eq(schema.reminders.id, id),
+            sql`${schema.reminders.id}::text = ${String(id)}`,
             eq(schema.reminders.userId, userId)
         ))
         .returning();
@@ -33,7 +33,7 @@ export const deleteReminderById = async (id, userId) => {
     const [deleted] = await db
         .delete(schema.reminders)
         .where(and(
-            eq(schema.reminders.id, id),
+            sql`${schema.reminders.id}::text = ${String(id)}`,
             eq(schema.reminders.userId, userId)
         ))
         .returning();
@@ -44,7 +44,7 @@ export const markReminderCompleted = async (id) => {
     const [updated] = await db
         .update(schema.reminders)
         .set({ isCompleted: true })
-        .where(eq(schema.reminders.id, id))
+        .where(sql`${schema.reminders.id}::text = ${String(id)}`)
         .returning();
     return updated;
 };

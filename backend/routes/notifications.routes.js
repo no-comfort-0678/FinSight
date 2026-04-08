@@ -1,15 +1,13 @@
 import express from "express";
 import { db } from "../db/db.js";
 import { notifications } from "../db/schema/notifications.js";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { protect } from "../middlewares/auth.middleware.js";
 import { sendEmailNotification } from "../services/email.service.js";
 
 const router = express.Router();
 
 router.use(protect);
-
-const normalizeId = (id) => (/^\d+$/.test(id) ? Number(id) : id);
 
 router.get("/personal/:id", async (req, res) => {
   try {
@@ -72,11 +70,16 @@ router.post("/", async (req, res) => {
 router.patch("/:id/read", async (req, res) => {
   try {
     const userId = req.user.id;
-    const id = normalizeId(req.params.id);
+    const id = String(req.params.id);
     const [updated] = await db
       .update(notifications)
       .set({ isRead: true })
-      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)))
+      .where(
+        and(
+          sql`${notifications.id}::text = ${id}`,
+          eq(notifications.userId, userId)
+        )
+      )
       .returning();
 
     if (!updated) return res.status(404).json({ message: "Notification not found" });
@@ -90,10 +93,15 @@ router.patch("/:id/read", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const userId = req.user.id;
-    const id = normalizeId(req.params.id);
+    const id = String(req.params.id);
     const [deleted] = await db
       .delete(notifications)
-      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)))
+      .where(
+        and(
+          sql`${notifications.id}::text = ${id}`,
+          eq(notifications.userId, userId)
+        )
+      )
       .returning();
 
     if (!deleted) return res.status(404).json({ message: "Notification not found" });
