@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { db } from "../db/db.js";
-import { accounts,payments } from "../db/schema/index.js";
+import { accounts, payments } from "../db/schema/index.js";
 import { getAccountForUpdate, updateAccountBalance } from "../repositories/accounts.repo.js";
 import { createPayment, markPaymentStatus } from "../repositories/payments.repo.js";
 import { insertLedgerEntry } from "../repositories/ledger.repo.js";
@@ -10,7 +10,8 @@ export const sendPaymentService = async ({
   receiverAccountId,
   amount,
   description,
-  idempotencyKey, 
+  category,
+  idempotencyKey,
 }) => {
   return db.transaction(async (tx) => {
     const txId = idempotencyKey || crypto.randomUUID();
@@ -26,6 +27,7 @@ export const sendPaymentService = async ({
       amount,
       status: "pending",
       description,
+      category,
     });
     const senderNewBalance = Number(sender.balance) - amount;
     await insertLedgerEntry(tx, {

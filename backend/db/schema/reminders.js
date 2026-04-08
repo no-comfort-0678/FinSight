@@ -1,5 +1,6 @@
 import {
   pgTable,
+  uuid,
   serial,
   integer,
   varchar,
@@ -12,21 +13,16 @@ import {
 import { users } from "./users.js";
 
 export const reminders = pgTable("reminders", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
 
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull(),
 
   title: varchar("title", { length: 255 }).notNull(),
+  description: varchar("description", { length: 500 }),
 
-  reminderDate: date("reminder_date").notNull(),
+  remindAt: timestamp("remind_at").notNull(),
 
-  reminderTime: time("reminder_time").notNull(),
-
-  amount: numeric("amount", { precision: 15, scale: 2 }).default("0.00"),
-
-  notified: boolean("notified").default(false),
+  isCompleted: boolean("is_completed").default(false),
 
   createdAt: timestamp("created_at").defaultNow(),
 });

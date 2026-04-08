@@ -1,80 +1,113 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext"; 
+import { useState } from "react"; // 1. Added missing import
+import { useNavigate, NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
+
 const Navbar = () => {
+  const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
-  const { user, logout } = useAuth(); 
-  const navBtnText = user ? "Logout" : "Login";
-  const handleAuthClick = () => {
+  const { user, logout } = useAuth();
+
+
+  // Unified Handler
+  const handleAuthAction = () => {
     if (user) {
-      logout();
-      navigate("/login");
+      setShowConfirm(true); // Open Modal
     } else {
-      navigate("/login");
+      navigate("/login"); // Go to Login
     }
   };
+
+
+  const confirmLogout = () => {
+    logout();
+    setShowConfirm(false);
+    navigate("/login");
+  };
+
+
   return (
-    <nav>
-      {/* Brand/Logo Section */}
-      <div
-        className="title"
-        style={{ cursor: "pointer" }}
-        onClick={() => navigate(user ? "/home" : "/login")}
-      >
-        <img src="/2.png" alt="FinSight Icon" />
-        <div id="text">
-          <h1>FinSight</h1>
-          <h2>Your Personal Expense Tracker</h2>
+    <div>
+      <nav>
+        {/* Brand/Logo Section */}
+        <div
+          className="title"
+          style={{ cursor: "pointer" }}
+          onClick={() => navigate(user ? "/dashboard" : "/login")}
+        >
+          <img src="/2.png" alt="FinSight Icon" />
+          <div id="text">
+            <h1>FinSight</h1>
+            <h2>Your Personal Expense Tracker</h2>
+          </div>
         </div>
-      </div>
 
-      {/* Navigation Links - Only visible if logged in */}
-      {user && (
-        <div className="functions">
 
-          {/* <div className="dropdown">
-            <button className="dropdown-trigger">Transactions</button>
-            <div className="dropdown-content">
-              <div 
-                onClick={() => navigate("/transactions/entry")} 
-                style={{ cursor: "pointer" }}
-              >
-                Manual Entry
-              </div>
-              <div 
-                onClick={() => navigate("/transactions/payments")} 
-                style={{ cursor: "pointer" }}
-              >
-                Make Payment
-              </div>
+        {/* Navigation Links */}
+        {user && (
+          <div className="functions">
+            <button onClick={() => navigate("/transactions/payments")}>
+              Transactions
+            </button>
+            <button onClick={() => navigate("/dashboard")}>
+              Dashboard
+            </button>
+            <button onClick={() => navigate("/split")}>
+              Split Expenses
+            </button>
+            <button onClick={() => navigate("/notifications")}>
+              Notifications & Reminders
+            </button>
+          </div>
+        )}
+
+
+        <div className="nav-right-section">
+          {user && (
+            <button
+              className="profile-avatar-btn"
+              onClick={() => navigate("/profile")}
+              title="View Profile"
+            >
+              {user.profilePic ? (
+                <img src={user.profilePic} alt="Profile" className="profile-img" />
+              ) : (
+                <span className="profile-fallback">
+                  {user.name?.charAt(0) || "U"}
+                </span>
+              )}
+            </button>
+          )}
+
+
+          {/* 2. Changed handleAuthClick to handleAuthAction */}
+          <button id="cred" onClick={handleAuthAction}>
+            {user ? "Logout" : "Login"}
+          </button>
+        </div>
+      </nav>
+
+
+      {/* Logout Confirmation Modal */}
+      {showConfirm && (
+        <div className="modal-overlay">
+          <div className="fs-glass modal-content">
+            <h3>Confirm Logout</h3>
+            <p>Are you sure you want to sign out of FinSight?</p>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={() => setShowConfirm(false)}>
+                Stay Logged In
+              </button>
+              <button className="btn-danger" onClick={confirmLogout}>
+                Logout
+              </button>
             </div>
-          </div> */}
-          <button onClick={() => navigate("/transactions/payments")} style={{ cursor: "pointer" }}>
-            Transactions
-          </button>
-
-          <button onClick={() => navigate("/dashboard")} style={{ cursor: "pointer" }}>
-            Dashboard
-          </button>
-
-          <button onClick={() => navigate("/split")} style={{ cursor: "pointer" }}>
-            Split Expenses
-          </button>
-
-          <button onClick={() => navigate("/notifications")} style={{ cursor: "pointer" }}>
-            Notifications & Reminders
-          </button>
-          <button onClick={() => navigate("/profile")} style={{ cursor: "pointer" }}>
-           Profile
-          </button>
+          </div>
         </div>
       )}
-
-      {/* Auth Button */}
-      <button id="cred" onClick={handleAuthClick} style={{ cursor: "pointer" }}>
-        {navBtnText}
-      </button>
-    </nav>
+    </div>
   );
 };
+
 
 export default Navbar;

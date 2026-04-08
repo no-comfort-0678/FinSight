@@ -1,11 +1,10 @@
 import { db } from "../db/db.js";
 import { accounts } from "../db/schema/accounts.js";
-import { expenses } from "../db/schema/expenses.js";
-import { eq } from "drizzle-orm";
+import { expenses, expenseItems } from "../db/schema/expenses.js";
+import { eq,and } from "drizzle-orm";
 import crypto from "crypto";
 
 export const getUserExpensesService = async (userId) => {
-
   const [account] = await db
     .select({ id: accounts.id })
     .from(accounts)
@@ -22,17 +21,10 @@ export const getUserExpensesService = async (userId) => {
     .orderBy(expenses.createdAt);
 };
 
-
-export const createExpenseFromReceiptService = async ({
+export const createExpenseService = async (
   userId,
-  amount,
-  vendor,
-  billDate,
-  fileUrl,
-  fileHash,
-  ocrText,
-}) => {
-
+  { ocrText, fileUrl, amount, vendor, category, billDate }
+) => {
   const [account] = await db
     .select({ id: accounts.id })
     .from(accounts)
@@ -42,34 +34,87 @@ export const createExpenseFromReceiptService = async ({
     throw new Error("Account not found");
   }
 
-
-  const existing = await db
-    .select()
-    .from(expenses)
-    .where(eq(expenses.fileHash, fileHash));
-
-  if (existing.length > 0) {
-    throw new Error("Duplicate receipt detected");
-  }
-
-
   const transactionId = crypto.randomUUID();
-
+  const fileHash = crypto
+    .createHash("sha256")
+    .update(ocrText || fileUrl || transactionId)
+    .digest("hex");
 
   const [expense] = await db
     .insert(expenses)
     .values({
       transactionId,
       accountId: account.id,
-      amount,
-      vendor,
-      billDate,
+      amount: amount || 0,
+      vendor: vendor || "Manual Expense",
+      billDate: billDate || new Date(),
       fileUrl,
       fileHash,
       ocrText,
+      category: category || "Other",
       status: "completed",
     })
     .returning();
 
   return expense;
+};
+
+export const createExpenseFromReceiptService = async ({
+  userId,
+  amount,
+  vendor,
+  billDate,
+  fileUrl,
+  fileHash,
+  ocrText,
+  category,
+}) => {
+  const [account] = await db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(eq(accounts.userId, userId));
+
+  if (!account) {
+    throw new Error("Account not found");
+  }
+
+  const existing = await db
+    .select()
+    .from(expenses)
+    .where(
+        and(
+            eq(expenses.fileHash, fileHash),
+            eq(expenses.accountId, account.id)
+        )
+    );
+  // Use the generic createExpenseService, overriding the fileHash generation
+  // and providing specific receipt details.
+  const [expense] = await db
+    .insert(expenses)
+    .values({
+      transactionId: crypto.randomUUID(), // Generate here as createExpenseService generates its own
+      accountId: account.id, // Pass accountId directly
+      amount,
+      vendor,
+      billDate,
+      fileUrl,
+      fileHash, // Use the provided fileHash
+      ocrText,
+      category: category || "Shopping", // Default for now, could be passed from OCR
+      status: "completed",
+    })
+    .returning();
+
+  return expense;
+};
+
+export const saveExpenseItems = async (expenseId, items) => {
+  if (!items || items.length === 0) return [];
+  const rows = items.map((item) => ({
+    expenseId,
+    name: item.name,
+    amount: String(item.amount),
+    category: item.category || "Other",
+  }));
+  return db.insert(expenseItems).values(rows).returning();
 };

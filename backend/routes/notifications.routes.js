@@ -7,97 +7,101 @@ import { sendEmailNotification } from "../services/email.service.js";
 
 const router = express.Router();
 
-// ✅ All routes protected — userId comes from JWT, NOT hardcoded
 router.use(protect);
 
-// GET /api/notifications — Get all notifications for logged-in user
+const normalizeId = (id) => (/^\d+$/.test(id) ? Number(id) : id);
+
+router.get("/personal/:id", async (req, res) => {
+  try {
+    const roomId = Number(req.params.id);
+    const data = await db
+      .select()
+      .from(notifications)
+      .where(and(eq(notifications.roomId, roomId), eq(notifications.isRead, false)))
+      .orderBy(desc(notifications.createdAt));
+    res.json(data);
+  } catch (err) {
+    console.error("GET PERSONAL NOTIFICATIONS ERROR:", err);
+    res.status(500).json({ error: "Fetch failed" });
+  }
+});
+
 router.get("/", async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const data = await db
-            .select()
-            .from(notifications)
-            .where(eq(notifications.userId, userId))
-            .orderBy(desc(notifications.createdAt));
+  try {
+    const userId = req.user.id;
+    const data = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
 
-        res.json(data);
-    } catch (err) {
-        console.error("GET NOTIFICATIONS ERROR:", err);
-        res.status(500).json({ message: err.message || "Failed to fetch notifications" });
-    }
+    res.json(data);
+  } catch (err) {
+    console.error("GET NOTIFICATIONS ERROR:", err);
+    res.status(500).json({ message: err.message || "Failed to fetch notifications" });
+  }
 });
 
-// POST /api/notifications — Create a notification for logged-in user
 router.post("/", async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const { message, type } = req.body;
+  try {
+    const userId = req.user.id;
+    const { message, type, roomId } = req.body;
 
-        if (!message) {
-            return res.status(400).json({ message: "message is required" });
-        }
-
-        const [created] = await db
-            .insert(notifications)
-            .values({ userId, message, type })
-            .returning();
-
-        // Send email notification
-        try {
-            await sendEmailNotification(userId, created);
-        } catch (emailError) {
-            console.error('Failed to send email notification:', emailError);
-            // Don't fail the request if email fails
-        }
-
-        res.status(201).json(created);
-    } catch (err) {
-        console.error("CREATE NOTIFICATION ERROR:", err);
-        res.status(500).json({ message: err.message || "Failed to create notification" });
+    if (!message) {
+      return res.status(400).json({ message: "message is required" });
     }
+
+    const [created] = await db
+      .insert(notifications)
+      .values({ userId, message, type, roomId })
+      .returning();
+
+    try {
+      await sendEmailNotification(userId, created);
+    } catch (emailError) {
+      console.error("Failed to send email notification:", emailError);
+    }
+
+    res.status(201).json(created);
+  } catch (err) {
+    console.error("CREATE NOTIFICATION ERROR:", err);
+    res.status(500).json({ message: err.message || "Failed to create notification" });
+  }
 });
 
-// PATCH /api/notifications/:id/read — Mark a notification as read
 router.patch("/:id/read", async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const id = Number(req.params.id);
-        const [updated] = await db
-            .update(notifications)
-            .set({ isRead: true })
-            .where(and(
-                eq(notifications.id, id),
-                eq(notifications.userId, userId)
-            ))
-            .returning();
+  try {
+    const userId = req.user.id;
+    const id = normalizeId(req.params.id);
+    const [updated] = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)))
+      .returning();
 
-        if (!updated) return res.status(404).json({ message: "Notification not found" });
-        res.json(updated);
-    } catch (err) {
-        console.error("MARK READ ERROR:", err);
-        res.status(500).json({ message: err.message || "Failed to mark notification as read" });
-    }
+    if (!updated) return res.status(404).json({ message: "Notification not found" });
+    res.json(updated);
+  } catch (err) {
+    console.error("MARK READ ERROR:", err);
+    res.status(500).json({ message: err.message || "Failed to mark notification as read" });
+  }
 });
 
-// DELETE /api/notifications/:id — Delete a notification
 router.delete("/:id", async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const id = Number(req.params.id);
-        const [deleted] = await db
-            .delete(notifications)
-            .where(and(
-                eq(notifications.id, id),
-                eq(notifications.userId, userId)
-            ))
-            .returning();
+  try {
+    const userId = req.user.id;
+    const id = normalizeId(req.params.id);
+    const [deleted] = await db
+      .delete(notifications)
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)))
+      .returning();
 
-        if (!deleted) return res.status(404).json({ message: "Notification not found" });
-        res.json({ message: "Notification deleted", id: deleted.id });
-    } catch (err) {
-        console.error("DELETE NOTIFICATION ERROR:", err);
-        res.status(500).json({ message: err.message || "Failed to delete notification" });
-    }
+    if (!deleted) return res.status(404).json({ message: "Notification not found" });
+    res.json({ message: "Notification deleted", id: deleted.id });
+  } catch (err) {
+    console.error("DELETE NOTIFICATION ERROR:", err);
+    res.status(500).json({ message: err.message || "Failed to delete notification" });
+  }
 });
 
 export default router;

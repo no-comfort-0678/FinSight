@@ -1,10 +1,10 @@
 import { db, schema } from "../db/db.js";
 import { eq, desc, and } from "drizzle-orm";
 
-export const createReminder = async ({ userId, title, reminderDate, reminderTime, amount }) => {
+export const createReminder = async ({ userId, title, remindAt, description }) => {
     const [reminder] = await db
         .insert(schema.reminders)
-        .values({ userId, title, reminderDate, reminderTime, amount: amount || "0.00" })
+        .values({ userId, title, remindAt, description })
         .returning();
     return reminder;
 };
@@ -23,7 +23,7 @@ export const updateReminderById = async (id, userId, updates) => {
         .set(updates)
         .where(and(
             eq(schema.reminders.id, id),
-            eq(schema.reminders.userId, userId)  // ✅ Ownership check
+            eq(schema.reminders.userId, userId)
         ))
         .returning();
     return updated;
@@ -34,16 +34,16 @@ export const deleteReminderById = async (id, userId) => {
         .delete(schema.reminders)
         .where(and(
             eq(schema.reminders.id, id),
-            eq(schema.reminders.userId, userId)  // ✅ Ownership check
+            eq(schema.reminders.userId, userId)
         ))
         .returning();
     return deleted;
 };
 
-export const markReminderNotified = async (id) => {
+export const markReminderCompleted = async (id) => {
     const [updated] = await db
         .update(schema.reminders)
-        .set({ notified: true })
+        .set({ isCompleted: true })
         .where(eq(schema.reminders.id, id))
         .returning();
     return updated;

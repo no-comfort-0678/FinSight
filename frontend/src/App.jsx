@@ -14,18 +14,29 @@ import NotFound from "./pages/notfound/NotFound";
 import Navbar from "./components/navbar/navbar";
 import Profile from "./pages/auth/profile/profile";
 
+
 function App() {
-  const { user } = useAuth();
+  const { user,authLoading } = useAuth();
+
+
+  if (authLoading) {
+    return <div>Loading...</div>;
+  }
+
 
   return (
     <>
-      <img src="/bgimg.png" alt="bg-img" id="bg-img" />
       <Navbar />
 
+
       <Routes>
-  <Route path="/" element={<Navigate to="/login" replace />} />
+  <Route
+  path="/"
+  element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />}
+/>
   <Route path="/login" element={<Login />} />
   <Route path="/signup" element={<Signup />} />
+
 
   <Route
     path="/dashboard"
@@ -38,6 +49,7 @@ function App() {
     }
   />
 
+
   <Route
     path="/home"
     element={
@@ -47,6 +59,7 @@ function App() {
     }
   />
 
+
   <Route
     path="/transactions/entry"
     element={
@@ -55,6 +68,7 @@ function App() {
       </ProtectedRoute>
     }
   />
+
 
   <Route
     path="/transactions/payments"
@@ -66,6 +80,18 @@ function App() {
   />
 
   <Route
+    path="/transactions"
+    element={
+      <ProtectedRoute>
+        <AppLayout>
+          <Transaction page="history" />
+        </AppLayout>
+      </ProtectedRoute>
+    }
+  />
+
+
+  <Route
     path="/split"
     element={
       <ProtectedRoute>
@@ -73,6 +99,7 @@ function App() {
       </ProtectedRoute>
     }
   />
+
 
   <Route
     path="/notifications"
@@ -83,6 +110,7 @@ function App() {
     }
   />
 
+
   <Route
     path="/profile"
     element={
@@ -92,10 +120,12 @@ function App() {
     }
   />
 
+
   <Route path="*" element={<NotFound />} />
 </Routes>
 </>
   );
 }
+
 
 export default App;

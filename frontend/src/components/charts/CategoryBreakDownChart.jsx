@@ -3,13 +3,12 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 
-const COLORS = ["#e0c600","#10B981","#F97316","#3B82F6","#EF4444","#8B5CF6","#06B6D4","#EC4899"];
+const COLORS = ["#e0c600", "#10B981", "#F97316", "#3B82F6", "#EF4444", "#8B5CF6", "#06B6D4", "#EC4899"];
 
-export default function CategoryBreakdownChart({ month, year }) {
+export default function CategoryBreakdownChart({ month, year, onCategoryClick, selectedCategory }) {
   const { user, token } = useAuth();
   const [data, setData] = useState([]);
-  const [selected, setSelected] = useState(null);   
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user || !token) return;
@@ -69,13 +68,13 @@ export default function CategoryBreakdownChart({ month, year }) {
     <div className="fs-glass fs-chart-card">
       <div className="fs-tx__header">
         <h3 className="fs-chart-card__title">Category Breakdown</h3>
-        <p className="fs-chart-card__sub">Monthly Expenses</p>
+        <p className="fs-chart-card__sub">All-Time Expenses</p>
       </div>
 
-      <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
 
         {/* Pie */}
-        <div style={{ width:"100%", height:220 }}>
+        <div style={{ width: "100%", height: 220 }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -85,11 +84,7 @@ export default function CategoryBreakdownChart({ month, year }) {
                 innerRadius={60}
                 outerRadius={80}
                 paddingAngle={2}
-                onClick={(entry) => setSelected(
-                  selected?.category === entry.name
-                    ? null
-                    : { category: entry.name, percent: entry.percent, amount: entry.value }
-                )}
+                onClick={(entry) => onCategoryClick?.(entry.name)}
                 labelLine={false}
               >
                 {data.map((entry, idx) => (
@@ -97,7 +92,7 @@ export default function CategoryBreakdownChart({ month, year }) {
                     key={`cell-${idx}`}
                     fill={COLORS[idx % COLORS.length]}
                     cursor="pointer"
-                    strokeWidth={selected?.category === entry.name ? 3 : 0}
+                    strokeWidth={selectedCategory === entry.name ? 3 : 0}
                     stroke="#fff"
                   />
                 ))}
@@ -107,19 +102,15 @@ export default function CategoryBreakdownChart({ month, year }) {
           </ResponsiveContainer>
         </div>
 
-        
+
         <div className="fs-legend">
           {data.map((entry, idx) => (
             <div
               key={idx}
-              className={`fs-legend__item${selected?.category === entry.name ? " fs-legend__item--active" : ""}`}
-              onClick={() => setSelected(
-                selected?.category === entry.name
-                  ? null
-                  : { category: entry.name, percent: entry.percent, amount: entry.value }
-              )}
+              className={`fs-legend__item${selectedCategory === entry.name ? " fs-legend__item--active" : ""}`}
+              onClick={() => onCategoryClick?.(entry.name)}
             >
-             
+
               <div className="fs-legend__dot" style={{ background: COLORS[idx % COLORS.length] }} />
               <div>
                 <div className="fs-legend__name">{entry.name}</div>
@@ -131,32 +122,35 @@ export default function CategoryBreakdownChart({ month, year }) {
 
       </div>
 
-      
+
       <AnimatePresence>
-        {selected && (
-          <motion.div
-            className="fs-sel"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          >
-            <div className="fs-sel__row">
-              <div>
-                <div className="fs-sel__lbl">Selected Category</div>
-                <div className="fs-sel__val">{selected.category}</div>
+        {selectedCategory && data.find(d => d.name === selectedCategory) && (() => {
+          const selData = data.find(d => d.name === selectedCategory);
+          return (
+            <motion.div
+              className="fs-sel"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            >
+              <div className="fs-sel__row">
+                <div>
+                  <div className="fs-sel__lbl">Selected Category</div>
+                  <div className="fs-sel__val">{selData.name}</div>
+                </div>
+                <div className="fs-sel__right">
+                  <div className="fs-sel__lbl">Amount</div>
+                  <div className="fs-sel__amt">₹{selData.value.toLocaleString()}</div>
+                </div>
               </div>
-              <div className="fs-sel__right">
-                <div className="fs-sel__lbl">Amount</div>
-                <div className="fs-sel__amt">₹{selected.amount.toLocaleString()}</div>
-              </div>
-            </div>
-            <div className="fs-sel__pct">{selected.percent}% of total expenses</div>
-            <button className="fs-sel__clear" onClick={() => setSelected(null)}>
-              Clear Selection ✕
-            </button>
-          </motion.div>
-        )}
+              <div className="fs-sel__pct">{selData.percent}% of total expenses</div>
+              <button className="fs-sel__clear" onClick={() => onCategoryClick?.(null)}>
+                Clear Selection ✕
+              </button>
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
     </div>
   );

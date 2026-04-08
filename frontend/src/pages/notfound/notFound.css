@@ -1,0 +1,160 @@
+/* ═══════════════════════════════════════════════════
+   notfound.css — 404 Not Found Page
+   ═══════════════════════════════════════════════════ */
+
+.notfound-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: var(--bg-base);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient glow */
+.notfound-page::before {
+  content: '';
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(224,198,0,0.055) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Card ── */
+.notfound-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 56px 44px 48px;
+  background: rgba(14,16,13,0.72);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+}
+
+.notfound-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(224,198,0,0.40), transparent);
+}
+
+/* ── 404 number ── */
+.notfound-code {
+  font-size: clamp(72px, 14vw, 110px);
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.9;
+}
+
+/* Dot separator under 404 */
+.notfound-code::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 3px;
+  background: var(--gold);
+  border-radius: 2px;
+  opacity: 0.35;
+  margin: 16px auto 0;
+}
+
+/* ── Heading ── */
+.notfound-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin-top: 4px;
+}
+
+/* ── Sub-text ── */
+.notfound-sub {
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  max-width: 320px;
+}
+
+/* ── Back button ── */
+.notfound-btn {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 28px;
+  background: var(--gold);
+  color: #0a0b09;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform var(--transition), box-shadow var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.notfound-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.notfound-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(224,198,0,0.40);
+}
+
+.notfound-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* ── Extra links row ── */
+.notfound-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 6px;
+}
+
+.notfound-link {
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition);
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  text-decoration: none;
+}
+.notfound-link:hover { color: var(--gold); }
+
+.notfound-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(255,255,255,0.12);
+}

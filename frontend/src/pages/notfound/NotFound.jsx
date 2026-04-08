@@ -1,27 +1,31 @@
-import React from 'react';
+import { useNavigate } from "react-router-dom";
+import "./notfound.css";
 
-function NotFound(){
-  const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    textAlign: 'center',
-    color: '#b5d4ab',
-    backgroundColor: 'rgba(0, 0, 0, 0.52)',
-    padding: '3rem',
-    borderRadius: '2rem',
-    backdropFilter: 'blur(15px)',
-    border: '1px solid rgba(255, 255, 255, 0.342)'
-  };
+export default function NotFound() {
+  const navigate = useNavigate();
 
-  return(
-    <div style={style}>
-      <h1 style={{fontSize: '4rem', margin: 0}}>404 :(</h1>
-      <h2 style={{fontSize: '1.5rem', fontWeight: 300}}>Page Not Found</h2>
-      <h3>The URL you entered does not exist.</h3>
+  return (
+    <div className="notfound-page">
+      <div className="notfound-card">
+        <div className="notfound-code">404</div>
+        <h1 className="notfound-title">Page Not Found</h1>
+        <p className="notfound-sub">
+          The page you're looking for doesn't exist or has been moved.
+          Let's get you back on track.
+        </p>
+        <button className="notfound-btn" onClick={() => navigate("/dashboard")}>
+          ← Back to Dashboard
+        </button>
+        <div className="notfound-links">
+          <button className="notfound-link" onClick={() => navigate("/login")}>
+            Login
+          </button>
+          <div className="notfound-divider" />
+          <button className="notfound-link" onClick={() => navigate("/")}>
+            Home
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
-
-export default NotFound;

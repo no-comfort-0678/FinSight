@@ -7,17 +7,18 @@ const API = "http://localhost:5000/api/v1/payments/send";
 
 export default function PaymentForm({ onSuccess }) {
   const { user, token } = useAuth();
-  const [receiverId,   setReceiverId]   = useState("");
-  const [amount,       setAmount]       = useState("");
-  const [description,  setDescription]  = useState("");
-  const [loading,      setLoading]      = useState(false);
+  const [receiverId, setReceiverId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSend = async () => {
     const senderAccountId = user?.accountId;
 
-    if (!senderAccountId || !receiverId || !amount) {
-      return alert("Receiver and amount are required");
+    if (!senderAccountId || !receiverId || !amount || !category) {
+      return alert("Receiver, amount, and category are required");
     }
 
     setLoading(true);
@@ -33,10 +34,11 @@ export default function PaymentForm({ onSuccess }) {
           "idempotency-key": idempotencyKey,
         },
         body: JSON.stringify({
-          senderAccountId:  Number(senderAccountId),
+          senderAccountId: Number(senderAccountId),
           receiverAccountId: Number(receiverId),
-          amount:           Number(amount),
-          description:      description || "",
+          amount: Number(amount),
+          description: description || "",
+          category: category,
         }),
       });
 
@@ -48,6 +50,7 @@ export default function PaymentForm({ onSuccess }) {
       setReceiverId("");
       setAmount("");
       setDescription("");
+      setCategory("");
 
       onSuccess?.(data);
       navigate("/dashboard");
@@ -57,6 +60,17 @@ export default function PaymentForm({ onSuccess }) {
       setLoading(false);
     }
   };
+
+  const categories = [
+    "Food & Dining",
+    "Shopping",
+    "Utilities",
+    "Salary",
+    "Rent",
+    "Transportation",
+    "Entertainment",
+    "Other"
+  ];
 
   return (
     <div className="fs-glass fs-form-card">
@@ -100,17 +114,23 @@ export default function PaymentForm({ onSuccess }) {
         </div>
       </div>
 
-      {/* Description */}
+      {/* Category Dropdown */}
       <div className="fs-field">
-        <label className="fs-field__label">Description (optional)</label>
-        <input
-          type="text"
+        <label className="fs-field__label">Category</label>
+        <select
           className="fs-field__input"
-          placeholder="What is this for?"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          <option value="" className="text-zinc-500">Select Category</option>
+          {categories.map(cat => (
+            <option key={cat} value={cat} className="text-black">{cat}</option>
+          ))}
+        </select>
       </div>
+
+      {/* Description / Notes (Optional) */}
+
 
       <button
         onClick={handleSend}

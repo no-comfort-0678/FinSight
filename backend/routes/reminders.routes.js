@@ -1,13 +1,6 @@
 import express from "express";
 import { protect } from "../middlewares/auth.middleware.js";
-import {
-    getReminders,
-    createReminder,
-    updateReminder,
-    deleteReminder,
-    markNotified,
-} from "../controllers/reminders.controller.js";
-
+import { getReminders, createReminder, updateReminder, deleteReminder, markNotified } from "../controllers/reminders.controller.js";
 const router = express.Router();
 
 // ✅ All routes protected — userId comes from JWT, NOT hardcoded
