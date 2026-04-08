@@ -1,23 +1,35 @@
-import { getDashboardSummary, getSpendingTrend } from "../../controllers/dashboard.controller.js";
+import { getDashboardSummary, getSpendingTrend, getAllTransactions } from "../../controllers/dashboard.controller.js";
 
 export async function fetchData(intent, req, res) {
-    if (intent === "SPENDING" || intent === "BALANCE") {
-        const data = await getDashboardSummaryInternal(req);
-        return compressDashboard(data);
-    }
+    // Always fetch dashboard summary as base context
+    const dashboardData = await getDashboardSummaryInternal(req);
+    const baseContext = compressDashboard(dashboardData);
 
     if (intent === "TREND") {
-        const data = await getSpendingTrendInternal(req);
-        return compressTrend(data);
+        const trendData = await getSpendingTrendInternal(req);
+        return {
+            ...baseContext,
+            recentTrend: compressTrend(trendData)
+        };
     }
 
-    return {};
+    if (intent === "SPENDING" || intent === "BALANCE") {
+        return baseContext;
+    }
+
+    // For GENERAL or other intents, also include recent transactions for better context
+    return {
+        ...baseContext,
+        note: "This is the current financial status of the user."
+    };
 }
+
 async function getDashboardSummaryInternal(req) {
     return new Promise((resolve, reject) => {
         getDashboardSummary(req, {
             json: resolve,
-            status: () => ({ json: reject })
+            status: () => ({ json: (err) => reject(err) }),
+            set: () => {} // Handle res.set in controller
         });
     });
 }
@@ -26,17 +38,23 @@ async function getSpendingTrendInternal(req) {
     return new Promise((resolve, reject) => {
         getSpendingTrend(req, {
             json: resolve,
-            status: () => ({ json: reject })
+            status: () => ({ json: (err) => reject(err) })
         });
     });
 }
 
 function compressDashboard(data) {
     return {
-        totalSpent: Number(data.stats.totalSpent),
-        totalReceived: Number(data.stats.totalReceived),
-        balance: Number(data.stats.balance),
-        topCategories: getTopCategories(data.breakdown)
+        totalSpentThisMonth: Number(data.stats.totalSpent),
+        totalReceivedThisMonth: Number(data.stats.totalReceived),
+        currentBalance: Number(data.stats.balance),
+        topCategories: getTopCategories(data.breakdown),
+        recentTransactions: data.recentTransactions.slice(0, 5).map(t => ({
+            date: t.date,
+            vendor: t.vendor,
+            amount: t.amount,
+            category: t.category
+        }))
     };
 }
 
@@ -52,4 +70,4 @@ function getTopCategories(breakdown) {
             acc[k] = v;
             return acc;
         }, {});
-}
+}
