@@ -4,7 +4,7 @@ FinSight is a modern, AI-powered personal finance management application that he
 
 ## 🚀 Features
 
-- **Automated Expense Tracking:**  Extract transaction details from various sources(Now it fetches only from interapp payments.)
+- **Automated Expense Tracking:**  Extract transaction details from various sources(Now it fetches only from interapp payments and splitwise feature.)
 - **Dynamic Dashboard:** Real-time visualization of spending habits using interactive charts (Recharts).
 - **Transaction Management:** Detailed ledger for viewing, editing, and categorizing transactions.
 - **Secure Authentication:** JWT-based authentication for user data privacy.
